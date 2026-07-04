@@ -1,0 +1,6 @@
+{
+  "name": "SkillBridge",
+  "description": "Bridges the gap between college graduates and job-ready engineers through a structured Node.js & Express backend curriculum, practice projects, and capstone review workflow.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
