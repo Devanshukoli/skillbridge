@@ -45,17 +45,39 @@ export class ProfileController {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const { name, bio, currentRole, githubUrl, linkedinUrl, portfolioUrl, resumeUrl, skills, goals, timeCommitment } = req.body;
+      const {
+        name,
+        bio,
+        currentRole,
+        githubUrl,
+        linkedinUrl,
+        portfolioUrl,
+        resumeUrl,
+        skills,
+        experienceLevel,
+        goals,
+        timeCommitment,
+        avatarId,
+        appearance,
+        privacy
+      } = req.body;
 
       if (!name) {
         return res.status(400).json({ error: 'Name is required' });
       }
 
       const updatedProfile = {
-        experienceLevel: user.profile.experienceLevel || '',
+        experienceLevel: experienceLevel || user.profile.experienceLevel || '',
         skills: skills || user.profile.skills || [],
         goals: goals || user.profile.goals || '',
         timeCommitment: timeCommitment || user.profile.timeCommitment || '',
+        avatarId: avatarId || user.profile.avatarId || 'blue-code',
+        appearance: appearance || user.profile.appearance || 'system',
+        privacy: privacy || user.profile.privacy || {
+          publicProfile: true,
+          showExternalLinks: true,
+          showProgressBadges: true
+        },
         bio: bio || '',
         currentRole: currentRole || '',
         githubUrl: githubUrl || '',

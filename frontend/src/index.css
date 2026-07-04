@@ -29,3 +29,12 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
+
+:root[data-theme="dark"] body {
+  background-color: #020617;
+  color: #e2e8f0;
+}
+
+:root[data-theme="dark"] .app-shell {
+  background-color: #020617;
+}

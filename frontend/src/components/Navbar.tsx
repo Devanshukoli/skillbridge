@@ -4,7 +4,6 @@ import {
   Server, 
   BookOpen, 
   Award, 
-  User as UserIcon, 
   Settings, 
   LogOut, 
   Menu, 
@@ -14,6 +13,7 @@ import {
   ChevronRight,
   ClipboardList
 } from 'lucide-react';
+import { getAvatarPreset } from '../avatarPresets';
 
 interface NavbarProps {
   user: User;
@@ -29,12 +29,14 @@ export default function Navbar({ user, activeSection, setActiveSection, onLogout
     { id: 'dashboard', label: 'Dashboard', icon: Server },
     { id: 'curriculum', label: 'Curriculum', icon: BookOpen },
     { id: 'submissions', label: 'Submissions', icon: ClipboardList },
-    { id: 'profile', label: 'My Profile', icon: UserIcon },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   if (user.role === 'admin') {
-    menuItems.push({ id: 'admin', label: 'Admin Panel', icon: Settings });
+    menuItems.push({ id: 'admin', label: 'Admin Panel', icon: Award });
   }
+
+  const avatar = getAvatarPreset(user.profile.avatarId);
 
   return (
     <>
@@ -72,8 +74,8 @@ export default function Navbar({ user, activeSection, setActiveSection, onLogout
           {/* User Widget */}
           <div className="bg-slate-800/30 border border-slate-800/80 rounded-2xl p-4 space-y-3.5">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/10">
-                {user.name.charAt(0).toUpperCase()}
+              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center overflow-hidden shadow-lg shadow-blue-500/10">
+                <img src={avatar.src} alt="" className="w-full h-full object-cover" />
               </div>
               <div className="min-w-0 flex-1">
                 <span className="font-semibold text-white block text-sm truncate">{user.name}</span>

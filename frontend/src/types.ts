@@ -3,6 +3,13 @@ export interface UserProfile {
   skills: string[];
   goals: string;
   timeCommitment: string;
+  avatarId?: string;
+  appearance?: 'system' | 'dark' | 'light';
+  privacy?: {
+    publicProfile?: boolean;
+    showExternalLinks?: boolean;
+    showProgressBadges?: boolean;
+  };
   bio?: string;
   currentRole?: string;
   githubUrl?: string;

@@ -6,7 +6,7 @@ import OnboardingFlow from './components/OnboardingFlow';
 import DashboardView from './components/DashboardView';
 import CurriculumView from './components/CurriculumView';
 import ProjectSubmissionView from './components/ProjectSubmissionView';
-import ProfileView from './components/ProfileView';
+import SettingsView from './components/SettingsView';
 import AdminView from './components/AdminView';
 import { Code } from 'lucide-react';
 
@@ -34,6 +34,26 @@ export default function App() {
 
   const [loadingSession, setLoadingSession] = useState(true);
   const [loadingCurriculum, setLoadingCurriculum] = useState(false);
+
+  useEffect(() => {
+    const preference = user?.profile.appearance || 'system';
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const applyTheme = () => {
+      const resolvedTheme = preference === 'system'
+        ? (mediaQuery.matches ? 'dark' : 'light')
+        : preference;
+
+      document.documentElement.dataset.theme = resolvedTheme;
+    };
+
+    applyTheme();
+
+    if (preference === 'system') {
+      mediaQuery.addEventListener('change', applyTheme);
+      return () => mediaQuery.removeEventListener('change', applyTheme);
+    }
+  }, [user?.profile.appearance]);
 
   // 1. Fetch Session on Mount
   useEffect(() => {
@@ -128,7 +148,7 @@ export default function App() {
 
   // 6. Main Portal Layout
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col lg:flex-row">
+    <div className="app-shell min-h-screen bg-slate-50 text-slate-900 flex flex-col lg:flex-row">
       
       {/* Navigation drawer */}
       <Navbar 
@@ -180,8 +200,8 @@ export default function App() {
           />
         )}
 
-        {activeSection === 'profile' && (
-          <ProfileView 
+        {activeSection === 'settings' && (
+          <SettingsView
             user={user}
             onUserUpdate={setUser}
           />

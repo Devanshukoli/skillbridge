@@ -1,0 +1,536 @@
+import React, { useState } from 'react';
+import { User } from '../types';
+import { avatarPresets } from '../avatarPresets';
+import {
+  Award,
+  BriefcaseBusiness,
+  Check,
+  Clock,
+  FileText,
+  Github,
+  Globe,
+  Linkedin,
+  Lock,
+  Mail,
+  Monitor,
+  Moon,
+  Plus,
+  Save,
+  Shield,
+  Sun,
+  Tag,
+  User as UserIcon,
+  X
+} from 'lucide-react';
+
+interface SettingsViewProps {
+  user: User;
+  onUserUpdate: (updatedUser: User) => void;
+}
+
+type SettingsTab = 'general' | 'account' | 'privacy';
+type AppearanceMode = 'system' | 'dark' | 'light';
+
+const experienceOptions = [
+  'Never coded professionally',
+  'Built personal projects',
+  'Have internship experience'
+];
+
+const goalOptions = [
+  'Get my first job',
+  'Prepare for a specific offer',
+  'Just leveling up / curiosity'
+];
+
+const commitmentOptions = [
+  'Casual ~2-3 hrs',
+  'Regular ~5-8 hrs',
+  'Intensive 10+ hrs'
+];
+
+const appearanceOptions: Array<{ value: AppearanceMode; label: string; icon: React.ElementType }> = [
+  { value: 'system', label: 'System', icon: Monitor },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'light', label: 'Light', icon: Sun }
+];
+
+export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) {
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  const [name, setName] = useState(user.name);
+  const [avatarId, setAvatarId] = useState(user.profile.avatarId || avatarPresets[0].id);
+  const [bio, setBio] = useState(user.profile.bio || '');
+  const [currentRole, setCurrentRole] = useState(user.profile.currentRole || '');
+  const [githubUrl, setGithubUrl] = useState(user.profile.githubUrl || '');
+  const [linkedinUrl, setLinkedinUrl] = useState(user.profile.linkedinUrl || '');
+  const [portfolioUrl, setPortfolioUrl] = useState(user.profile.portfolioUrl || '');
+  const [resumeUrl, setResumeUrl] = useState(user.profile.resumeUrl || '');
+  const [skills, setSkills] = useState<string[]>(user.profile.skills || []);
+  const [newSkill, setNewSkill] = useState('');
+  const [experienceLevel, setExperienceLevel] = useState(user.profile.experienceLevel || experienceOptions[0]);
+  const [goals, setGoals] = useState(user.profile.goals || goalOptions[0]);
+  const [timeCommitment, setTimeCommitment] = useState(user.profile.timeCommitment || commitmentOptions[0]);
+  const [appearance, setAppearance] = useState<AppearanceMode>(user.profile.appearance || 'system');
+  const [publicProfile, setPublicProfile] = useState(user.profile.privacy?.publicProfile ?? true);
+  const [showExternalLinks, setShowExternalLinks] = useState(user.profile.privacy?.showExternalLinks ?? true);
+  const [showProgressBadges, setShowProgressBadges] = useState(user.profile.privacy?.showProgressBadges ?? true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const tabs: Array<{ id: SettingsTab; label: string; icon: React.ElementType }> = [
+    { id: 'general', label: 'General', icon: UserIcon },
+    { id: 'account', label: 'Account', icon: Mail },
+    { id: 'privacy', label: 'Privacy', icon: Shield }
+  ];
+
+  const handleAddSkill = () => {
+    const trimmed = newSkill.trim();
+    if (trimmed && !skills.some((skill) => skill.toLowerCase() === trimmed.toLowerCase())) {
+      setSkills([...skills, trimmed]);
+    }
+    setNewSkill('');
+  };
+
+  const handleRemoveSkill = (skillToRemove: string) => {
+    setSkills(skills.filter((skill) => skill !== skillToRemove));
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name.trim()) {
+      setError('Full name is required.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess(false);
+
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          avatarId,
+          bio,
+          currentRole,
+          githubUrl,
+          linkedinUrl,
+          portfolioUrl,
+          resumeUrl,
+          skills,
+          experienceLevel,
+          goals,
+          timeCommitment,
+          appearance,
+          privacy: {
+            publicProfile,
+            showExternalLinks,
+            showProgressBadges
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update settings');
+      }
+
+      onUserUpdate(data.user);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto animate-fade-in text-slate-800 space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-extrabold text-slate-950 tracking-tight">Settings</h1>
+        <p className="text-sm text-slate-500">Manage your profile, account, privacy, and workspace preferences.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
+        <aside className="bg-white border border-slate-200 rounded-2xl p-2 h-max shadow-sm">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
+                  isActive
+                    ? 'bg-blue-50 text-blue-700 font-bold'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Icon className="w-4 h-4" />
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </aside>
+
+        <section className="min-w-0">
+          {error && (
+            <div className="mb-4 p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-sm shadow-sm">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-4 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-700 text-sm flex items-center gap-2 shadow-sm">
+              <Check className="w-4 h-4" />
+              <span>Settings saved.</span>
+            </div>
+          )}
+
+          {activeTab === 'general' && (
+            <form onSubmit={handleSave} className="space-y-6">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 lg:p-6 shadow-sm">
+                <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
+                  <UserIcon className="w-5 h-5 text-blue-600" />
+                  <h2 className="font-bold text-slate-950">Profile</h2>
+                </div>
+
+                <div className="mt-5 space-y-5">
+                  <div className="space-y-3">
+                    <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                      Avatar
+                    </label>
+                    <div className="flex flex-wrap gap-3">
+                      {avatarPresets.map((avatar) => {
+                        const isSelected = avatarId === avatar.id;
+
+                        return (
+                          <button
+                            key={avatar.id}
+                            type="button"
+                            onClick={() => setAvatarId(avatar.id)}
+                            className={`relative w-16 h-16 rounded-2xl overflow-hidden border-2 transition-all ${
+                              isSelected ? 'border-blue-600 ring-4 ring-blue-100' : 'border-slate-200 hover:border-slate-300'
+                            }`}
+                            title={avatar.label}
+                          >
+                            <img src={avatar.src} alt={avatar.label} className="w-full h-full object-cover" />
+                            {isSelected && (
+                              <span className="absolute bottom-1 right-1 bg-blue-600 text-white rounded-full p-0.5">
+                                <Check className="w-3 h-3" />
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                        Full Name
+                      </label>
+                      <input
+                        id="settings-name-input"
+                        type="text"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm focus:bg-white transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                        Professional Headline
+                      </label>
+                      <div className="relative">
+                        <BriefcaseBusiness className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                          id="settings-headline-input"
+                          type="text"
+                          placeholder="Software Engineer"
+                          value={currentRole}
+                          onChange={(e) => setCurrentRole(e.target.value)}
+                          className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm placeholder-slate-400 focus:bg-white transition-colors"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                      About / Bio
+                    </label>
+                    <textarea
+                      id="settings-bio-textarea"
+                      rows={4}
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm leading-relaxed placeholder-slate-400 focus:bg-white transition-colors"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <LinkInput id="settings-github-input" label="GitHub" icon={Github} value={githubUrl} onChange={setGithubUrl} placeholder="https://github.com/username" />
+                    <LinkInput id="settings-linkedin-input" label="LinkedIn" icon={Linkedin} value={linkedinUrl} onChange={setLinkedinUrl} placeholder="https://linkedin.com/in/username" />
+                    <LinkInput id="settings-portfolio-input" label="Personal Portfolio" icon={Globe} value={portfolioUrl} onChange={setPortfolioUrl} placeholder="https://portfolio.dev" />
+                    <LinkInput id="settings-resume-input" label="Resume Drive Link" icon={FileText} value={resumeUrl} onChange={setResumeUrl} placeholder="https://drive.google.com/file/..." />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 lg:p-6 shadow-sm">
+                <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
+                  <Tag className="w-5 h-5 text-blue-600" />
+                  <h2 className="font-bold text-slate-950">Skills & Goals</h2>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+                  <div className="space-y-3">
+                    <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                      Skill Badges
+                    </label>
+                    <div className="flex flex-wrap gap-2 p-3.5 bg-slate-50 border border-slate-100 rounded-xl min-h-24">
+                      {skills.map((skill) => (
+                        <span key={skill} className="bg-blue-50 text-blue-700 border border-blue-100 pl-2.5 pr-1.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                          <span>{skill}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSkill(skill)}
+                            className="text-slate-400 hover:text-slate-700 p-0.5 rounded-md hover:bg-blue-100 transition-colors"
+                            title={`Remove ${skill}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                      {skills.length === 0 && (
+                        <span className="text-xs text-slate-400 self-center">No skills added yet.</span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        id="settings-skill-input"
+                        type="text"
+                        value={newSkill}
+                        onChange={(e) => setNewSkill(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddSkill();
+                          }
+                        }}
+                        placeholder="Postgres"
+                        className="flex-1 min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddSkill}
+                        className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 rounded-xl transition-all"
+                        title="Add skill"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <SelectField id="settings-experience-select" label="Experience Level" icon={Award} value={experienceLevel} options={experienceOptions} onChange={setExperienceLevel} />
+                    <SelectField id="settings-goals-select" label="Career Goals" icon={BriefcaseBusiness} value={goals} options={goalOptions} onChange={setGoals} />
+                    <SelectField id="settings-commitment-select" label="Time Commitment" icon={Clock} value={timeCommitment} options={commitmentOptions} onChange={setTimeCommitment} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 lg:p-6 shadow-sm">
+                <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
+                  <Monitor className="w-5 h-5 text-blue-600" />
+                  <h2 className="font-bold text-slate-950">Appearance</h2>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {appearanceOptions.map((option) => {
+                    const Icon = option.icon;
+                    const isSelected = appearance === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setAppearance(option.value)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  id="settings-save-btn"
+                  type="submit"
+                  disabled={loading}
+                  className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{loading ? 'Saving...' : 'Save Settings'}</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {activeTab === 'account' && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 lg:p-6 shadow-sm space-y-5">
+              <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
+                <Mail className="w-5 h-5 text-blue-600" />
+                <h2 className="font-bold text-slate-950">Account</h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ReadOnlyField label="Email" value={user.email} />
+                <ReadOnlyField label="Role" value={user.role} />
+                <ReadOnlyField label="User ID" value={user.id} />
+                <ReadOnlyField label="Joined" value={new Date(user.createdAt).toLocaleDateString()} />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'privacy' && (
+            <form onSubmit={handleSave} className="bg-white border border-slate-200 rounded-2xl p-5 lg:p-6 shadow-sm space-y-5">
+              <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
+                <Lock className="w-5 h-5 text-blue-600" />
+                <h2 className="font-bold text-slate-950">Privacy</h2>
+              </div>
+
+              <div className="space-y-3">
+                <ToggleRow label="Public profile" checked={publicProfile} onChange={setPublicProfile} />
+                <ToggleRow label="Show external links" checked={showExternalLinks} onChange={setShowExternalLinks} />
+                <ToggleRow label="Show progress badges" checked={showProgressBadges} onChange={setShowProgressBadges} />
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{loading ? 'Saving...' : 'Save Privacy'}</span>
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+interface LinkInputProps {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  value: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+}
+
+function LinkInput({ id, label, icon: Icon, value, placeholder, onChange }: LinkInputProps) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+        {label}
+      </label>
+      <div className="relative">
+        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <input
+          id={id}
+          type="url"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 text-sm font-mono focus:bg-white transition-colors"
+        />
+      </div>
+    </div>
+  );
+}
+
+interface SelectFieldProps {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}
+
+function SelectField({ id, label, icon: Icon, value, options, onChange }: SelectFieldProps) {
+  return (
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-1.5 text-xs font-mono text-slate-500 uppercase tracking-wider">
+        <Icon className="w-3.5 h-3.5 text-slate-400" />
+        <span>{label}</span>
+      </label>
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm"
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+        {label}
+      </label>
+      <div className="min-h-11 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 break-all">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-4 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+      <span className="text-sm font-semibold text-slate-700">{label}</span>
+      <button
+        type="button"
+        aria-pressed={checked}
+        onClick={() => onChange(!checked)}
+        className={`w-11 h-6 rounded-full p-1 transition-colors ${checked ? 'bg-blue-600' : 'bg-slate-300'}`}
+      >
+        <span className={`block w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+      </button>
+    </div>
+  );
+}

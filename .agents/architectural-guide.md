@@ -82,7 +82,7 @@ Entry path:
 - `dashboard` -> `DashboardView`
 - `curriculum` -> `CurriculumView`
 - `submissions` -> `ProjectSubmissionView`
-- `profile` -> `ProfileView`
+- `settings` -> `SettingsView`
 - `admin` -> `AdminView`, only when `user.role === 'admin'`
 
 Important frontend state in `App.tsx`:
@@ -267,6 +267,18 @@ Start with:
 
 Remember that the frontend discovers the session via `GET /api/auth/me`, not local storage.
 
+### Change profile, settings, appearance, or privacy
+
+Start with:
+
+- `frontend/src/components/SettingsView.tsx`
+- `frontend/src/components/Navbar.tsx`
+- `frontend/src/avatarPresets.ts` for built-in avatar choices.
+- `frontend/src/types.ts`
+- `backend/modules/profile/*`
+
+Profile settings persist through `POST /api/profile`. Appearance is stored on `user.profile.appearance` and applied by `App.tsx` through `document.documentElement.dataset.theme`.
+
 ### Change curriculum data
 
 Start with:
@@ -294,7 +306,7 @@ Approving submissions may affect `progress`, `pointsBalance`, and capstone `clai
 Start with:
 
 - `backend/modules/claims/*`
-- `frontend/src/components/ProfileView.tsx`
+- `frontend/src/components/SettingsView.tsx`
 - `frontend/src/components/AdminView.tsx`
 - `frontend/src/types.ts`
 
