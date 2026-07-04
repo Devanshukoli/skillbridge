@@ -1,20 +1,198 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# SkillBridge
 
-# Run and deploy your AI Studio app
+SkillBridge is a full-stack learning portal for software learners. It includes student authentication, onboarding, curriculum lessons, project submissions, admin review, and reward claims.
 
-This contains everything you need to run your app locally.
+The project runs as one Node.js app:
 
-View your app in AI Studio: https://ai.studio/apps/727eec14-b8ed-4863-8ed6-76d7b746bd50
+- React frontend in `frontend/`
+- Express backend in `backend/`
+- Local JSON database fallback in `db.json`
+- Optional Supabase persistence when Supabase environment variables are configured
 
-## Run Locally
+## Prerequisites
 
-**Prerequisites:**  Node.js
+Install these before starting:
 
+- Node.js 20 or newer
+- npm
+
+Check your versions:
+
+```bash
+node --version
+npm --version
+```
+
+## Quick Start
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+
+```bash
+npm install
+```
+
+2. Start the development server:
+
+```bash
+npm run dev
+```
+
+3. Open the app:
+
+```text
+http://localhost:3000
+```
+
+That is enough for local development. The app uses `db.json` automatically when Supabase is not configured.
+
+## Default Local Accounts
+
+The backend seeds these users on startup if they do not already exist in `db.json`.
+
+Admin:
+
+```text
+Email: admin@skillbridge.com
+Password: admin123
+```
+
+Student:
+
+```text
+Email: student@skillbridge.com
+Password: student123
+```
+
+You can also create a new student account from the sign-up screen.
+
+## Environment Variables
+
+No environment variables are required for the default local setup.
+
+Optional variables:
+
+```text
+JWT_SECRET=replace-with-a-long-random-string
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
+DISABLE_HMR=true
+```
+
+Notes:
+
+- `JWT_SECRET` signs login cookies. If omitted, the app uses a development fallback secret.
+- `SUPABASE_URL` and `SUPABASE_ANON_KEY` switch persistence from `db.json` to Supabase.
+- `DISABLE_HMR=true` disables Vite hot module reload and file watching for environments where file watching causes problems.
+- Keep real secrets out of committed files.
+
+On PowerShell, set an env var for the current terminal like this:
+
+```powershell
+$env:JWT_SECRET="replace-with-a-long-random-string"
+npm run dev
+```
+
+On macOS/Linux shells:
+
+```bash
+JWT_SECRET="replace-with-a-long-random-string" npm run dev
+```
+
+## Available Scripts
+
+```bash
+npm run dev
+```
+
+Starts the Express server with Vite middleware at `http://localhost:3000`.
+
+```bash
+npm run build
+```
+
+Builds the React frontend into `dist/` and bundles the backend into `dist/server.cjs`.
+
+```bash
+npm start
+```
+
+Runs the production build. Run `npm run build` first.
+
+```bash
+npm run lint
+```
+
+Runs the TypeScript compiler in check-only mode.
+
+```bash
+npm run clean
+```
+
+Removes build output. This script uses `rm -rf`, so it works best in Git Bash, WSL, macOS, or Linux.
+
+## Project Structure
+
+```text
+.
+|-- frontend/
+|   |-- index.html
+|   `-- src/
+|       |-- main.tsx
+|       |-- App.tsx
+|       |-- types.ts
+|       `-- components/
+|-- backend/
+|   |-- server.ts
+|   |-- server/
+|   |   |-- db.ts
+|   |   `-- supabase.ts
+|   |-- middlewares/
+|   `-- modules/
+|       |-- auth/
+|       |-- profile/
+|       |-- curriculum/
+|       |-- submissions/
+|       `-- claims/
+|-- db.json
+|-- package.json
+|-- tsconfig.json
+`-- vite.config.ts
+```
+
+## How The App Runs
+
+In development, `npm run dev` runs `backend/server.ts`.
+
+The Express server:
+
+1. Registers JSON parsing middleware.
+2. Mounts API routes under `/api`.
+3. Seeds local data in `db.json` when needed.
+4. Uses Supabase if Supabase variables are configured.
+5. Serves the React app through Vite middleware.
+
+In production, `npm run build` creates `dist/`, and `npm start` serves the built frontend plus the bundled backend.
+
+## Local Data
+
+The local database is `db.json`.
+
+It stores users, password hashes, curriculum, submissions, progress, and claims. The app updates this file as you use the local version.
+
+If you want a fresh local seed, stop the server, back up or remove `db.json`, then run `npm run dev` again.
+
+## Troubleshooting
+
+If `http://localhost:3000` does not open, check that `npm run dev` is still running and that no other app is using port `3000`.
+
+If login fails for the default accounts, inspect `db.json`. Existing data may have different user records. Restarting with a fresh `db.json` will recreate the seeded users.
+
+If Supabase is configured but data looks empty, confirm the Supabase tables exist and that `SUPABASE_URL` starts with `http://` or `https://`.
+
+If TypeScript changes behave strangely, run:
+
+```bash
+npm run lint
+```
+
+For architecture notes aimed at AI coding agents, see `.agents/architectural-guide.md`.
