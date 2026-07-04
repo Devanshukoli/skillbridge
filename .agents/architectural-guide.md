@@ -1,0 +1,343 @@
+# SkillBridge Architectural Guide
+
+Purpose: give AI agents enough project context to make targeted changes without reading every file first.
+
+## Fast Summary
+
+SkillBridge is a full-stack TypeScript learning portal for software learners. The frontend is a React 19 single page app served from Vite. The backend is an Express API that runs in the same process and serves the frontend through Vite middleware during development.
+
+The app supports:
+
+- Student registration, login, logout, and simulated Google sign-in.
+- Student onboarding and profile editing.
+- Curriculum browsing, lesson completion, and project submission.
+- Admin review of project submissions.
+- Reward claims for capstone payouts.
+- Local JSON persistence by default, with optional Supabase persistence when Supabase env vars are present.
+
+## Repository Shape
+
+```text
+.
+|-- package.json                 # scripts and shared frontend/backend deps
+|-- vite.config.ts               # Vite config; frontend root is ./frontend
+|-- tsconfig.json                # shared TS config, noEmit
+|-- db.json                      # local JSON database fallback and seeded app data
+|-- .env.example                 # env var names; do not copy secrets into docs
+|-- frontend/
+|   |-- index.html
+|   `-- src/
+|       |-- main.tsx             # React root
+|       |-- App.tsx              # top-level app state/router-by-section
+|       |-- types.ts             # shared domain interfaces
+|       |-- index.css            # global Tailwind/theme styles
+|       `-- components/          # view components
+`-- backend/
+    |-- server.ts                # Express app, API mounting, Vite/prod serving
+    |-- server/
+    |   |-- db.ts                # local JSON DB load/save/seed
+    |   `-- supabase.ts          # optional Supabase adapter and seed helpers
+    |-- middlewares/
+    |   |-- auth.ts              # JWT cookie auth and admin gate
+    |   `-- errorHandler.ts      # global JSON error handler
+    `-- modules/
+        |-- auth/
+        |-- profile/
+        |-- curriculum/
+        |-- submissions/
+        `-- claims/
+```
+
+## Runtime Model
+
+Development command:
+
+```bash
+npm run dev
+```
+
+This runs `tsx backend/server.ts` on port `3000`.
+
+In development, `backend/server.ts` creates an Express app, mounts all `/api` routes, then mounts Vite in middleware mode for the React SPA. In production, the build script emits:
+
+- frontend bundle to `dist/`
+- backend bundle to `dist/server.cjs`
+
+Production command:
+
+```bash
+npm run build
+npm start
+```
+
+## Frontend Architecture
+
+Entry path:
+
+- `frontend/src/main.tsx` mounts `<App />`.
+- `frontend/src/App.tsx` owns the main app orchestration.
+
+`App.tsx` is not using React Router. It keeps `activeSection` in local state and renders one primary view at a time:
+
+- `dashboard` -> `DashboardView`
+- `curriculum` -> `CurriculumView`
+- `submissions` -> `ProjectSubmissionView`
+- `profile` -> `ProfileView`
+- `admin` -> `AdminView`, only when `user.role === 'admin'`
+
+Important frontend state in `App.tsx`:
+
+- `user`: authenticated user from `/api/auth/me`
+- `activeSection`: current portal section
+- `selectedLessonId`: curriculum reader focus
+- `selectedProjectId`: submission focus
+- `curriculum`: tracks, modules, lessons, projects, progress, submissions
+- `loadingSession` and `loadingCurriculum`
+
+Important flow:
+
+1. On mount, `App.tsx` calls `GET /api/auth/me`.
+2. If no user, render `AuthView`.
+3. If student user exists but onboarding is incomplete, render `OnboardingFlow`.
+4. Otherwise fetch `GET /api/curriculum` and render the portal shell.
+5. `Navbar` changes `activeSection`; the app resets selected lesson/project IDs when leaving their areas.
+
+Shared domain types live in `frontend/src/types.ts`. Backend modules import these interfaces too, so update this file carefully when changing domain shape.
+
+## Backend Architecture
+
+Entry path:
+
+- `backend/server.ts`
+
+`server.ts` responsibilities:
+
+- Create Express app.
+- Enable `express.json()`.
+- Register feature routers.
+- Register global `errorHandler`.
+- Seed local DB and optionally seed Supabase.
+- Serve Vite middleware in development.
+- Serve static `dist/` in production.
+
+Feature modules follow a consistent layer split:
+
+```text
+backend/modules/<feature>/
+|-- <feature>.routes.ts       # Express route paths and middleware
+|-- <feature>.controller.ts   # request/response orchestration
+`-- <feature>.service.ts      # persistence/business logic
+```
+
+The backend uses async controllers and passes errors to `next(err)`, where practical. Keep new route handlers consistent with the existing route -> controller -> service pattern.
+
+## API Map
+
+Auth routes are mounted under `/api/auth`:
+
+- `GET /api/auth/supabase-status`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `POST /api/auth/google-sim`
+
+Profile routes are mounted under `/api` and require auth:
+
+- `POST /api/onboarding`
+- `POST /api/profile`
+
+Curriculum routes are mounted under `/api` and require auth:
+
+- `GET /api/curriculum`
+- `POST /api/lessons/:id/complete`
+
+Submission routes are mounted under `/api`:
+
+- `POST /api/submissions` - authenticated student submission
+- `GET /api/admin/submissions` - admin only
+- `POST /api/admin/submissions/:id/review` - admin only
+
+Claim routes are mounted under `/api`:
+
+- `GET /api/claims` - authenticated user's claims
+- `POST /api/claims/request` - authenticated user creates claim request
+- `GET /api/admin/claims` - admin only
+- `POST /api/admin/claims/:id/pay` - admin only
+
+Auth is cookie-based. Login/register/google-sim set an HttpOnly `skillbridge_token` JWT cookie. `authenticate` reads that cookie, verifies it with `JWT_SECRET`, loads the user, then attaches `req.user`.
+
+## Persistence Model
+
+Default persistence is `db.json`, managed by `backend/server/db.ts`.
+
+`db.json` schema:
+
+- `users`
+- `passwords`
+- `tracks`
+- `modules`
+- `lessons`
+- `projects`
+- `submissions`
+- `progress`
+- `claims`
+
+`seedDatabase()` creates default admin/student users plus backend-engineering curriculum data when missing.
+
+Optional Supabase persistence is managed by `backend/server/supabase.ts`. When Supabase is enabled, services prefer Supabase helpers over `db.json`. The Supabase adapter maps camelCase TypeScript fields to snake_case table columns, for example:
+
+- `pointsBalance` -> `points_balance`
+- `claimableBalance` -> `claimable_balance`
+- `onboardingCompleted` -> `onboarding_completed`
+- `trackId` -> `track_id`
+- `moduleId` -> `module_id`
+
+When changing persistence behavior, update both the local JSON path and the Supabase path unless the feature is intentionally local-only.
+
+## Domain Model
+
+Canonical interfaces are in `frontend/src/types.ts`.
+
+Core entities:
+
+- `User`: role, balances, profile, onboarding state.
+- `Track`: curriculum track.
+- `Module`: ordered group within a track.
+- `Lesson`: markdown lesson content.
+- `Project`: practice or capstone assignment with rewards.
+- `Submission`: student project submission and review state.
+- `Progress`: lesson/project completion state.
+- `Claim`: reward payout request state.
+- `DashboardStats`: derived dashboard summary.
+
+Status values to preserve:
+
+- `User.role`: `student` or `admin`
+- `Project.type`: `practice` or `capstone`
+- `Submission.status`: `submitted`, `in_review`, `changes_requested`, `approved`, `rejected`
+- `Progress.status`: `completed`, `submitted`, `approved`
+- `Claim.status`: `pending`, `approved`, `paid`
+
+## Environment Variables
+
+Known variables:
+
+- `GEMINI_API_KEY`: documented for AI Studio runtime, not currently visible in the main app flow from the scanned entry points.
+- `APP_URL`: hosted app URL for callbacks/self-links.
+- `SUPABASE_URL`: enables Supabase mode when paired with anon key.
+- `SUPABASE_ANON_KEY`: Supabase public anon key.
+- `JWT_SECRET`: optional; backend falls back to a hard-coded development secret.
+- `NODE_ENV`: controls dev Vite middleware vs production static serving.
+- `DISABLE_HMR`: used by `vite.config.ts` to disable HMR/file watching in AI Studio-style environments.
+
+Do not paste real secret values into agent docs, tests, or logs.
+
+## Common Change Recipes
+
+### Add or change a frontend view
+
+Start with:
+
+- `frontend/src/App.tsx`
+- `frontend/src/components/Navbar.tsx`
+- the target file in `frontend/src/components/`
+
+If the view needs backend data, add or reuse an API call from the component and then inspect the matching backend module.
+
+### Add a new API endpoint
+
+Follow the module pattern:
+
+1. Add the path and middleware in `backend/modules/<feature>/<feature>.routes.ts`.
+2. Add request/response logic in the controller.
+3. Put data reads/writes in the service.
+4. If the endpoint requires a logged-in user, use `authenticate`.
+5. If the endpoint is admin-only, use `authenticate, requireAdmin`.
+6. Update frontend calls and shared types if the response shape changes.
+
+### Change auth/session behavior
+
+Start with:
+
+- `backend/modules/auth/*`
+- `backend/middlewares/auth.ts`
+- `frontend/src/App.tsx`
+- `frontend/src/components/AuthView.tsx`
+
+Remember that the frontend discovers the session via `GET /api/auth/me`, not local storage.
+
+### Change curriculum data
+
+Start with:
+
+- `backend/server/db.ts` for seed data.
+- `db.json` for existing local runtime data.
+- `backend/modules/curriculum/*` for read/complete behavior.
+- `frontend/src/components/CurriculumView.tsx` for presentation.
+
+Lesson content is markdown. Rendering is handled by `MarkdownRenderer`.
+
+### Change project submission or review
+
+Start with:
+
+- `backend/modules/submissions/*`
+- `frontend/src/components/ProjectSubmissionView.tsx`
+- `frontend/src/components/AdminView.tsx`
+- `frontend/src/types.ts`
+
+Approving submissions may affect `progress`, `pointsBalance`, and capstone `claimableBalance`.
+
+### Change claims/rewards
+
+Start with:
+
+- `backend/modules/claims/*`
+- `frontend/src/components/ProfileView.tsx`
+- `frontend/src/components/AdminView.tsx`
+- `frontend/src/types.ts`
+
+Claims draw from `claimableBalance`; capstone approval can increase that balance.
+
+### Change storage provider behavior
+
+Start with:
+
+- `backend/server/db.ts`
+- `backend/server/supabase.ts`
+- the relevant feature service
+
+Keep local JSON and Supabase behavior aligned. Be careful with field-name mapping between camelCase app objects and snake_case Supabase rows.
+
+## Styling and UI Notes
+
+- Tailwind CSS v4 is wired through `@tailwindcss/vite`.
+- Global styles live in `frontend/src/index.css`.
+- Icons come from `lucide-react`.
+- `motion` is installed for animation.
+- The app shell uses a left navigation layout on large screens and a responsive layout for smaller screens.
+
+## Build and Verification
+
+Useful scripts:
+
+```bash
+npm run dev      # start Express plus Vite middleware on port 3000
+npm run build    # build frontend and backend bundle
+npm start        # run production bundle
+npm run lint     # TypeScript noEmit check
+```
+
+There is no dedicated test script in `package.json` at the time this guide was written. Use `npm run lint` and `npm run build` as the baseline verification for code changes.
+
+## Agent Workflow Tips
+
+- Read this guide first, then inspect only the files related to the requested change.
+- Prefer `rg --files -g '!node_modules' -g '!dist' -g '!.git'` for a fast file map.
+- Avoid broad reads of `db.json` unless the task is specifically about seed/runtime data.
+- Treat `frontend/src/types.ts` as a contract shared by frontend and backend.
+- When editing backend behavior, check whether the service supports both local JSON and Supabase.
+- Do not change generated folders such as `node_modules` or `dist`.
+- Do not commit real credentials from `.env` or `.env.example` into documentation.
+- If you add a new architectural pattern, update this guide in the same change.
