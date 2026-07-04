@@ -15,6 +15,7 @@ export default function App() {
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   const [curriculum, setCurriculum] = useState<{
     tracks: Track[];
@@ -154,6 +155,8 @@ export default function App() {
       <Navbar 
         user={user} 
         activeSection={activeSection} 
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
         setActiveSection={(section) => {
           setActiveSection(section);
           // Auto clear specific reader selections when navigating tabs
@@ -164,7 +167,7 @@ export default function App() {
       />
 
       {/* Primary Workspace Stage */}
-      <main className="flex-1 lg:ml-64 p-6 lg:p-10 pb-24 lg:pb-10 overflow-y-auto max-w-7xl mx-auto w-full">
+      <main className={`flex-1 p-6 lg:p-10 pb-24 lg:pb-10 overflow-y-auto max-w-7xl mx-auto w-full ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         {activeSection === 'dashboard' && (
           <DashboardView 
             user={user}
