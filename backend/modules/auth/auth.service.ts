@@ -39,6 +39,24 @@ export class AuthService {
       return true;
     }
   }
+
+  async changePassword(userId: string, newPassword: string): Promise<boolean> {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    if (isSupabaseEnabled()) {
+      const { supabaseUpdatePassword } = await import('../../server/supabase');
+      return await supabaseUpdatePassword(userId, hashedPassword);
+    } else {
+      const db = loadDb();
+      if (!db.passwords[userId]) {
+        return false;
+      }
+
+      db.passwords[userId] = hashedPassword;
+      saveDb(db);
+      return true;
+    }
+  }
 }
 
 export const authService = new AuthService();

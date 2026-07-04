@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../../../frontend/src/types';
 import { authService } from './auth.service';
-import { JWT_SECRET, getCookies, AuthenticatedRequest } from '../../middlewares/auth';
+import { JWT_SECRET, getCookies, AuthenticatedRequest, authenticate } from '../../middlewares/auth';
 import { isSupabaseEnabled } from '../../server/supabase';
 
 export class AuthController {
@@ -105,6 +105,53 @@ export class AuthController {
   async logout(req: Request, res: Response, next: NextFunction) {
     try {
       res.setHeader('Set-Cookie', `skillbridge_token=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax`);
+      res.json({ success: true });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async changePassword(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { currentPassword, newPassword, confirmPassword } = req.body;
+
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({ error: 'All password fields are required' });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+      }
+
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({ error: 'New passwords do not match' });
+      }
+
+      const data = await authService.getUserByEmail(user.email);
+      if (!data) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const { passwordHash } = data;
+      if (!passwordHash || passwordHash === 'GOOGLE_OAUTH_OAUTH_NO_PASSWORD') {
+        return res.status(400).json({ error: 'This account does not have a password set' });
+      }
+
+      const match = await bcrypt.compare(currentPassword, passwordHash);
+      if (!match) {
+        return res.status(400).json({ error: 'Current password is incorrect' });
+      }
+
+      const success = await authService.changePassword(user.id, newPassword);
+      if (!success) {
+        return res.status(500).json({ error: 'Failed to update password' });
+      }
+
       res.json({ success: true });
     } catch (err) {
       next(err);

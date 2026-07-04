@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authController } from './auth.controller';
+import { authenticate } from '../../middlewares/auth';
 
 const router = Router();
 
@@ -8,6 +9,7 @@ router.get('/supabase-status', (req, res, next) => authController.supabaseStatus
 router.post('/register', (req, res, next) => authController.register(req, res, next));
 router.post('/login', (req, res, next) => authController.login(req, res, next));
 router.post('/logout', (req, res, next) => authController.logout(req, res, next));
+router.post('/change-password', authenticate, (req, res, next) => authController.changePassword(req, res, next));
 router.get('/me', (req, res, next) => authController.me(req, res, next));
 router.post('/google-sim', (req, res, next) => authController.googleSim(req, res, next));
 

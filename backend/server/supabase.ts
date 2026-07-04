@@ -249,6 +249,26 @@ export async function supabaseCreateUser(user: User, passwordHash: string): Prom
   }
 }
 
+export async function supabaseUpdatePassword(userId: string, passwordHash: string): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  try {
+    const { error } = await supabase
+      .from('skillbridge_passwords')
+      .upsert({
+        user_id: userId,
+        password_hash: passwordHash
+      });
+
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error('[Supabase] Error updating password:', err);
+    return false;
+  }
+}
+
 export async function supabaseUpdateUserProfile(
   userId: string,
   updates: {
