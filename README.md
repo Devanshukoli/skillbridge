@@ -73,6 +73,8 @@ Optional variables:
 
 ```text
 JWT_SECRET=replace-with-a-long-random-string
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-supabase-anon-key
 DISABLE_HMR=true
@@ -81,9 +83,16 @@ DISABLE_HMR=true
 Notes:
 
 - `JWT_SECRET` signs login cookies. If omitted, the app uses a development fallback secret.
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` enable Google Sign-In.
 - `SUPABASE_URL` and `SUPABASE_ANON_KEY` switch persistence from `db.json` to Supabase.
 - `DISABLE_HMR=true` disables Vite hot module reload and file watching for environments where file watching causes problems.
 - Keep real secrets out of committed files.
+
+For local Google Sign-In, add this redirect URI in Google Cloud:
+
+```text
+http://localhost:3000/api/auth/google/callback
+```
 
 On PowerShell, set an env var for the current terminal like this:
 

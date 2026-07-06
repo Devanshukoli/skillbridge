@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useEffect, useState } from 'react';
 import { User } from '../types';
-import { Code, Mail, Lock, User as UserIcon, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Code, Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
 
 interface AuthViewProps {
   onAuthSuccess: (user: User) => void;
@@ -14,9 +13,15 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showGoogleModal, setShowGoogleModal] = useState(false);
-  const [googleEmail, setGoogleEmail] = useState('kolidevanshu02@gmail.com');
-  const [googleName, setGoogleName] = useState('Devanshu Koli');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const authError = params.get('auth_error');
+    if (authError) {
+      setError(authError);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,32 +56,9 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
     }
   };
 
-  const handleGoogleSimulate = async () => {
-    if (!googleEmail) return;
-    setLoading(true);
+  const handleGoogleSignIn = () => {
     setError('');
-    try {
-      const res = await fetch('/api/auth/google-sim', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: googleName || 'Google Student',
-          email: googleEmail
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Google Sign-In failed');
-      }
-
-      onAuthSuccess(data.user);
-    } catch (err: any) {
-      setError(err.message || 'Connection error. Please try again.');
-    } finally {
-      setLoading(false);
-      setShowGoogleModal(false);
-    }
+    window.location.href = '/api/auth/google';
   };
 
   return (
@@ -261,11 +243,11 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
             </div>
           </div>
 
-          {/* Google Simulation Sign In Button */}
+          {/* Google Sign In Button */}
           <button
-            id="auth-google-sim-btn"
+            id="auth-google-btn"
             type="button"
-            onClick={() => setShowGoogleModal(true)}
+            onClick={handleGoogleSignIn}
             className="w-full py-3 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-semibold rounded-xl border border-slate-200 shadow-sm transition-all text-sm flex items-center justify-center space-x-2.5"
           >
             {/* Simple colored SVG Google Logo */}
@@ -279,75 +261,6 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
           </button>
         </div>
       </div>
-
-      {/* Google Authentication Simulation Modal */}
-      {showGoogleModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xl relative text-slate-800"
-          >
-            <div className="flex items-center space-x-2 text-blue-600 font-bold">
-              <ShieldCheck className="w-6 h-6 text-blue-500" />
-              <span className="text-lg">Google Accounts Simulator</span>
-            </div>
-            
-            <p className="text-xs text-slate-500 leading-relaxed">
-              To guarantee seamless operation within sandboxed iframe browsers, SkillBridge provides this OAuth simulation. It performs the authenticating handshake on the backend and issues a real JWT.
-            </p>
-
-            <div className="space-y-3 pt-2">
-              <div>
-                <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
-                  Full Name
-                </label>
-                <input
-                  id="google-sim-name"
-                  type="text"
-                  value={googleName}
-                  onChange={(e) => setGoogleName(e.target.value)}
-                  placeholder="Your Name"
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
-                  Google Account Email
-                </label>
-                <input
-                  id="google-sim-email"
-                  type="email"
-                  value={googleEmail}
-                  onChange={(e) => setGoogleEmail(e.target.value)}
-                  placeholder="user@gmail.com"
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2 pt-4 border-t border-slate-100">
-              <button
-                id="google-sim-cancel-btn"
-                type="button"
-                onClick={() => setShowGoogleModal(false)}
-                className="flex-1 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-all bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200"
-              >
-                Cancel
-              </button>
-              <button
-                id="google-sim-confirm-btn"
-                type="button"
-                onClick={handleGoogleSimulate}
-                className="flex-1 py-2 text-xs font-semibold text-white transition-all bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm"
-              >
-                Sign In Simulation
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   );
 }

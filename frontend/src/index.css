@@ -23,7 +23,7 @@
   }
 }
 
- :root {
+:root {
   --app-bg: #f8fafc;
   --app-surface: #ffffff;
   --app-surface-muted: #f8fafc;
@@ -66,6 +66,11 @@ main {
   background-color: var(--app-surface) !important;
 }
 
+:root[data-theme="dark"] .bg-white\/10,
+:root[data-theme="dark"] .bg-white\/5 {
+  background-color: rgba(15, 23, 42, 0.78) !important;
+}
+
 :root[data-theme="dark"] .bg-slate-50 {
   background-color: var(--app-surface-muted) !important;
 }
@@ -74,15 +79,43 @@ main {
   background-color: var(--app-surface-elevated) !important;
 }
 
+:root[data-theme="dark"] .bg-slate-200 {
+  background-color: #334155 !important;
+}
+
+:root[data-theme="dark"] .bg-blue-50,
+:root[data-theme="dark"] .bg-blue-50\/50 {
+  background-color: rgba(30, 64, 175, 0.22) !important;
+}
+
+:root[data-theme="dark"] .bg-amber-50 {
+  background-color: rgba(146, 64, 14, 0.22) !important;
+}
+
+:root[data-theme="dark"] .bg-emerald-50 {
+  background-color: rgba(6, 95, 70, 0.22) !important;
+}
+
+:root[data-theme="dark"] .bg-rose-50 {
+  background-color: rgba(159, 18, 57, 0.22) !important;
+}
+
+:root[data-theme="dark"] .bg-purple-50,
+:root[data-theme="dark"] .bg-indigo-50 {
+  background-color: rgba(88, 28, 135, 0.24) !important;
+}
+
 :root[data-theme="dark"] .bg-slate-900 {
   background-color: var(--app-surface-elevated) !important;
 }
 
+:root[data-theme="dark"] .text-slate-950,
 :root[data-theme="dark"] .text-slate-900,
 :root[data-theme="dark"] .text-slate-800 {
   color: var(--app-text) !important;
 }
 
+:root[data-theme="dark"] .text-slate-600,
 :root[data-theme="dark"] .text-slate-700 {
   color: var(--app-text-muted) !important;
 }
@@ -95,6 +128,29 @@ main {
   color: #64748b !important;
 }
 
+:root[data-theme="dark"] .text-blue-900,
+:root[data-theme="dark"] .text-blue-950,
+:root[data-theme="dark"] .text-purple-950 {
+  color: #bfdbfe !important;
+}
+
+:root[data-theme="dark"] .text-blue-700,
+:root[data-theme="dark"] .text-blue-600 {
+  color: #93c5fd !important;
+}
+
+:root[data-theme="dark"] .text-amber-700 {
+  color: #fcd34d !important;
+}
+
+:root[data-theme="dark"] .text-emerald-700 {
+  color: #6ee7b7 !important;
+}
+
+:root[data-theme="dark"] .text-rose-700 {
+  color: #fda4af !important;
+}
+
 :root[data-theme="dark"] .border-slate-200 {
   border-color: var(--app-border) !important;
 }
@@ -102,6 +158,17 @@ main {
 :root[data-theme="dark"] .border-slate-100,
 :root[data-theme="dark"] .border-slate-300 {
   border-color: var(--app-border-strong) !important;
+}
+
+:root[data-theme="dark"] .border-blue-100,
+:root[data-theme="dark"] .border-amber-100,
+:root[data-theme="dark"] .border-emerald-100,
+:root[data-theme="dark"] .border-rose-100 {
+  border-color: rgba(148, 163, 184, 0.32) !important;
+}
+
+:root[data-theme="dark"] .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--app-border) !important;
 }
 
 :root[data-theme="dark"] .shadow-sm {
@@ -119,4 +186,11 @@ main {
 :root[data-theme="dark"] input::placeholder,
 :root[data-theme="dark"] textarea::placeholder {
   color: var(--app-text-soft) !important;
+}
+
+:root[data-theme="dark"] table,
+:root[data-theme="dark"] thead,
+:root[data-theme="dark"] tbody,
+:root[data-theme="dark"] tr {
+  color: var(--app-text-muted);
 }

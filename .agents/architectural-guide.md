@@ -8,7 +8,7 @@ SkillBridge is a full-stack TypeScript learning portal for software learners. Th
 
 The app supports:
 
-- Student registration, login, logout, and simulated Google sign-in.
+- Student registration, login, logout, password changes, and Google OAuth sign-in.
 - Student onboarding and profile editing.
 - Curriculum browsing, lesson completion, and project submission.
 - Admin review of project submissions.
@@ -139,8 +139,10 @@ Auth routes are mounted under `/api/auth`:
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
+- `POST /api/auth/change-password`
 - `GET /api/auth/me`
-- `POST /api/auth/google-sim`
+- `GET /api/auth/google`
+- `GET /api/auth/google/callback`
 
 Profile routes are mounted under `/api` and require auth:
 
@@ -165,7 +167,7 @@ Claim routes are mounted under `/api`:
 - `GET /api/admin/claims` - admin only
 - `POST /api/admin/claims/:id/pay` - admin only
 
-Auth is cookie-based. Login/register/google-sim set an HttpOnly `skillbridge_token` JWT cookie. `authenticate` reads that cookie, verifies it with `JWT_SECRET`, loads the user, then attaches `req.user`.
+Auth is cookie-based. Login/register/Google OAuth set an HttpOnly `skillbridge_token` JWT cookie. `authenticate` reads that cookie, verifies it with `JWT_SECRET`, loads the user, then attaches `req.user`.
 
 ## Persistence Model
 
@@ -225,6 +227,8 @@ Known variables:
 
 - `GEMINI_API_KEY`: documented for AI Studio runtime, not currently visible in the main app flow from the scanned entry points.
 - `APP_URL`: hosted app URL for callbacks/self-links.
+- `GOOGLE_CLIENT_ID`: Google OAuth client ID for Sign-In.
+- `GOOGLE_CLIENT_SECRET`: Google OAuth client secret for Sign-In.
 - `SUPABASE_URL`: enables Supabase mode when paired with anon key.
 - `SUPABASE_ANON_KEY`: Supabase public anon key.
 - `JWT_SECRET`: optional; backend falls back to a hard-coded development secret.

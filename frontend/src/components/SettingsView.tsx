@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User } from '../types';
 import { avatarPresets } from '../avatarPresets';
 import {
@@ -83,6 +83,25 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const applyThemePreview = () => {
+      const resolvedTheme = appearance === 'system'
+        ? (mediaQuery.matches ? 'dark' : 'light')
+        : appearance;
+
+      document.documentElement.dataset.theme = resolvedTheme;
+    };
+
+    applyThemePreview();
+
+    if (appearance === 'system') {
+      mediaQuery.addEventListener('change', applyThemePreview);
+      return () => mediaQuery.removeEventListener('change', applyThemePreview);
+    }
+  }, [appearance]);
 
   const tabs: Array<{ id: SettingsTab; label: string; icon: React.ElementType }> = [
     { id: 'general', label: 'General', icon: UserIcon },

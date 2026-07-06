@@ -1,12 +1,49 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { User } from '../../../frontend/src/types';
 import { authService } from './auth.service';
-import { JWT_SECRET, getCookies, AuthenticatedRequest, authenticate } from '../../middlewares/auth';
+import { JWT_SECRET, getCookies, AuthenticatedRequest } from '../../middlewares/auth';
 import { isSupabaseEnabled } from '../../server/supabase';
+import { sendWelcomeEmail } from './welcomeEmail';
+
+const GOOGLE_OAUTH_PASSWORD_MARKER = 'GOOGLE_OAUTH_NO_PASSWORD';
+
+interface GoogleTokenResponse {
+  access_token?: string;
+  token_type?: string;
+  expires_in?: number;
+  id_token?: string;
+  error?: string;
+  error_description?: string;
+}
+
+interface GoogleUserInfo {
+  email?: string;
+  email_verified?: boolean;
+  name?: string;
+}
 
 export class AuthController {
+  private setSessionCookie(res: Response, user: User) {
+    const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.setHeader('Set-Cookie', `skillbridge_token=${token}; Path=/; HttpOnly; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax`);
+  }
+
+  private getBaseUrl(req: Request) {
+    const configuredUrl = process.env.APP_URL;
+    if (configuredUrl && /^https?:\/\//.test(configuredUrl)) {
+      return configuredUrl.replace(/\/$/, '');
+    }
+
+    return `${req.protocol}://${req.get('host')}`;
+  }
+
+  private getGoogleRedirectUri(req: Request) {
+    return `${this.getBaseUrl(req)}/api/auth/google/callback`;
+  }
+
   // Check Supabase connection status
   async supabaseStatus(req: Request, res: Response, next: NextFunction) {
     try {
@@ -57,11 +94,13 @@ export class AuthController {
         return res.status(500).json({ error: 'Failed to register user in database' });
       }
 
-      // Generate JWT
-      const token = jwt.sign({ userId, email: newUser.email, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
+      void sendWelcomeEmail({
+        name: newUser.name,
+        email: newUser.email,
+        appUrl: this.getBaseUrl(req)
+      });
 
-      // Set Cookie
-      res.setHeader('Set-Cookie', `skillbridge_token=${token}; Path=/; HttpOnly; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax`);
+      this.setSessionCookie(res, newUser);
       res.status(201).json({ user: newUser });
     } catch (err) {
       next(err);
@@ -90,11 +129,7 @@ export class AuthController {
         return res.status(400).json({ error: 'Invalid email or password' });
       }
 
-      // Generate JWT
-      const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-
-      // Set Cookie
-      res.setHeader('Set-Cookie', `skillbridge_token=${token}; Path=/; HttpOnly; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax`);
+      this.setSessionCookie(res, user);
       res.json({ user });
     } catch (err) {
       next(err);
@@ -138,7 +173,7 @@ export class AuthController {
       }
 
       const { passwordHash } = data;
-      if (!passwordHash || passwordHash === 'GOOGLE_OAUTH_OAUTH_NO_PASSWORD') {
+      if (!passwordHash || passwordHash === GOOGLE_OAUTH_PASSWORD_MARKER || passwordHash === 'GOOGLE_OAUTH_OAUTH_NO_PASSWORD') {
         return res.status(400).json({ error: 'This account does not have a password set' });
       }
 
@@ -184,15 +219,84 @@ export class AuthController {
     }
   }
 
-  // Simulate Google Sign-In
-  async googleSim(req: Request, res: Response, next: NextFunction) {
+  async googleRedirect(req: Request, res: Response, next: NextFunction) {
     try {
-      const { name, email } = req.body;
-      if (!email) {
-        return res.status(400).json({ error: 'Google email is required' });
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+      if (!clientId || !clientSecret) {
+        return res.status(500).json({ error: 'Google OAuth is not configured' });
       }
 
-      const normalizedEmail = email.toLowerCase();
+      const state = crypto.randomBytes(24).toString('hex');
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: this.getGoogleRedirectUri(req),
+        response_type: 'code',
+        scope: 'openid email profile',
+        state,
+        prompt: 'select_account'
+      });
+
+      res.setHeader('Set-Cookie', `skillbridge_oauth_state=${state}; Path=/; HttpOnly; Max-Age=600; SameSite=Lax`);
+      res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async googleCallback(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { code, state, error } = req.query;
+      const baseUrl = this.getBaseUrl(req);
+
+      if (error) {
+        return res.redirect(`${baseUrl}/?auth_error=${encodeURIComponent(String(error))}`);
+      }
+
+      const cookies = getCookies(req);
+      if (!state || cookies.skillbridge_oauth_state !== state) {
+        return res.redirect(`${baseUrl}/?auth_error=${encodeURIComponent('Invalid Google sign-in state')}`);
+      }
+
+      if (!code || typeof code !== 'string') {
+        return res.redirect(`${baseUrl}/?auth_error=${encodeURIComponent('Missing Google authorization code')}`);
+      }
+
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      if (!clientId || !clientSecret) {
+        return res.redirect(`${baseUrl}/?auth_error=${encodeURIComponent('Google OAuth is not configured')}`);
+      }
+
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: this.getGoogleRedirectUri(req),
+          grant_type: 'authorization_code'
+        })
+      });
+
+      const tokenData = await tokenRes.json() as GoogleTokenResponse;
+      if (!tokenRes.ok || !tokenData.access_token) {
+        const message = tokenData.error_description || tokenData.error || 'Google token exchange failed';
+        return res.redirect(`${baseUrl}/?auth_error=${encodeURIComponent(message)}`);
+      }
+
+      const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` }
+      });
+      const googleProfile = await profileRes.json() as GoogleUserInfo;
+
+      if (!profileRes.ok || !googleProfile.email) {
+        return res.redirect(`${baseUrl}/?auth_error=${encodeURIComponent('Could not read Google profile')}`);
+      }
+
+      const normalizedEmail = googleProfile.email.toLowerCase();
       const existing = await authService.getUserByEmail(normalizedEmail);
       let user: User;
 
@@ -202,7 +306,7 @@ export class AuthController {
         const userId = 'user-google-' + Date.now().toString();
         user = {
           id: userId,
-          name: name || 'Google User',
+          name: googleProfile.name || normalizedEmail.split('@')[0] || 'Google User',
           email: normalizedEmail,
           role: 'student',
           pointsBalance: 0,
@@ -217,12 +321,21 @@ export class AuthController {
           createdAt: new Date().toISOString()
         };
 
-        await authService.createUser(user, 'GOOGLE_OAUTH_OAUTH_NO_PASSWORD');
+        const created = await authService.createUser(user, GOOGLE_OAUTH_PASSWORD_MARKER);
+        if (!created) {
+          return res.redirect(`${baseUrl}/?auth_error=${encodeURIComponent('Failed to create Google account')}`);
+        }
+
+        void sendWelcomeEmail({
+          name: user.name,
+          email: user.email,
+          appUrl: baseUrl
+        });
       }
 
-      const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-      res.setHeader('Set-Cookie', `skillbridge_token=${token}; Path=/; HttpOnly; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax`);
-      res.json({ user });
+      this.setSessionCookie(res, user);
+      res.append('Set-Cookie', 'skillbridge_oauth_state=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax');
+      res.redirect(baseUrl);
     } catch (err) {
       next(err);
     }
