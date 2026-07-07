@@ -11,7 +11,8 @@ import {
   Code, 
   ChevronRight,
   ClipboardList,
-  ChevronLeft
+  ChevronLeft,
+  Layers
 } from 'lucide-react';
 import { getAvatarPreset } from '../avatarPresets';
 
@@ -30,6 +31,7 @@ export default function Navbar({ user, activeSection, isSidebarCollapsed, onTogg
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Server },
     { id: 'curriculum', label: 'Curriculum', icon: BookOpen },
+    { id: 'tracks', label: 'Tracks', icon: Layers },
     { id: 'submissions', label: 'Submissions', icon: ClipboardList },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];

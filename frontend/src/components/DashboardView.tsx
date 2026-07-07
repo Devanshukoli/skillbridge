@@ -23,6 +23,7 @@ interface DashboardViewProps {
     projects: Project[];
     progress: Progress[];
     submissions: Submission[];
+    currentTrackId?: string;
   };
   setActiveSection: (section: string) => void;
   setSelectedLessonId: (lessonId: string | null) => void;
@@ -143,7 +144,7 @@ export default function DashboardView({
   };
 
   // Get current active track metadata
-  const activeTrack = curriculum.tracks[0] || { name: 'Backend Engineer (Node.js + Express)', description: '' };
+  const activeTrack = curriculum.tracks.find((track) => track.id === curriculum.currentTrackId) || curriculum.tracks[0] || { name: 'Your Current Track', description: '' };
 
   // Motivation message based on experience / goals
   const getMotivationalHeader = () => {
@@ -161,11 +162,11 @@ export default function DashboardView({
     <div className="space-y-8 animate-fade-in text-slate-800">
       
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-8 relative overflow-hidden shadow-md">
+      <div className="bg-linear-to-r from-blue-700 to-indigo-800 rounded-3xl p-8 relative overflow-hidden shadow-md">
         <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20" />
         <div className="relative z-10 max-w-2xl space-y-3">
           <span className="text-xs font-mono text-blue-200 font-bold uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full border border-white/10">
-            Active Track: Node.js + Express
+            Active Track: {activeTrack.name}
           </span>
           <h1 className="text-3xl font-extrabold text-white tracking-tight sm:text-4xl">
             Welcome back, {user.name.split(' ')[0]}!
@@ -262,7 +263,7 @@ export default function DashboardView({
 
           <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-all duration-300"
+              className="h-full bg-linear-to-r from-blue-600 to-indigo-500 transition-all duration-300"
               style={{ width: `${completionPercentage}%` }}
             />
           </div>
@@ -408,14 +409,14 @@ export default function DashboardView({
           </p>
           <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-3 text-xs leading-relaxed">
             <div className="flex space-x-2">
-              <HelpCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <HelpCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-slate-800">How do I submit projects?</span>
                 <p className="text-slate-500 mt-0.5">Complete any project requirements, push them to a public GitHub repository, and submit the link under the Submissions tab.</p>
               </div>
             </div>
             <div className="flex space-x-2">
-              <HelpCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <HelpCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-slate-800">How does reviews & payout work?</span>
                 <p className="text-slate-500 mt-0.5">Our Senior Engineering reviewers evaluate your project within 24 hours. Upon approval, points are credited and the reward is added to your sponsorship balance immediately.</p>

@@ -25,12 +25,15 @@ interface CurriculumViewProps {
     projects: Project[];
     progress: Progress[];
     submissions: Submission[];
+    currentTrackId?: string;
   };
   onRefreshCurriculum: () => void;
   selectedLessonId: string | null;
   setSelectedLessonId: (lessonId: string | null) => void;
   setActiveSection: (section: string) => void;
   setSelectedProjectId: (projectId: string | null) => void;
+  currentTrackId: string;
+  setCurrentTrackId: (trackId: string) => void;
 }
 
 export default function CurriculumView({
@@ -41,24 +44,65 @@ export default function CurriculumView({
   selectedLessonId,
   setSelectedLessonId,
   setActiveSection,
-  setSelectedProjectId
+  setSelectedProjectId,
+  currentTrackId,
+  setCurrentTrackId
 }: CurriculumViewProps) {
-  const [activeModuleId, setActiveModuleId] = useState<string>('mod-1');
+  const [activeTrackId, setActiveTrackId] = useState<string>('');
+  const [activeModuleId, setActiveModuleId] = useState<string>('');
   const [completing, setCompleting] = useState(false);
   const [completionSuccess, setCompletionSuccess] = useState(false);
+
+  // Set initial track and module selection when curriculum loads
+  useEffect(() => {
+    if (curriculum.tracks.length === 0) return;
+    const preferredTrackId = currentTrackId || curriculum.currentTrackId || curriculum.tracks[0]?.id || '';
+    if (
+      preferredTrackId &&
+      activeTrackId !== preferredTrackId &&
+      curriculum.tracks.some((track) => track.id === preferredTrackId)
+    ) {
+      setActiveTrackId(preferredTrackId);
+      return;
+    }
+
+    if (!activeTrackId || !curriculum.tracks.some((track) => track.id === activeTrackId)) {
+      setActiveTrackId(preferredTrackId);
+    }
+  }, [curriculum.tracks, activeTrackId, currentTrackId, curriculum.currentTrackId]);
+
+  // Update active module when active track changes
+  useEffect(() => {
+    const trackModules = curriculum.modules
+      .filter((m) => m.trackId === activeTrackId)
+      .sort((a, b) => a.order - b.order);
+
+    if (trackModules.length === 0) {
+      setActiveModuleId('');
+      return;
+    }
+
+    if (!activeModuleId || !trackModules.some((module) => module.id === activeModuleId)) {
+      setActiveModuleId(trackModules[0].id);
+    }
+  }, [activeTrackId, curriculum.modules, activeModuleId]);
 
   // Auto-expand module if the selected lesson is from a different module
   useEffect(() => {
     if (selectedLessonId) {
-      const activeLesson = curriculum.lessons.find(l => l.id === selectedLessonId);
+      const activeLesson = curriculum.lessons.find((l) => l.id === selectedLessonId);
       if (activeLesson && activeLesson.moduleId !== activeModuleId) {
         setActiveModuleId(activeLesson.moduleId);
       }
     }
-  }, [selectedLessonId]);
+  }, [selectedLessonId, activeModuleId, curriculum.lessons]);
 
-  const activeLesson = curriculum.lessons.find(l => l.id === selectedLessonId) || null;
-  const sortedModules = [...curriculum.modules].sort((a, b) => a.order - b.order);
+  const activeLesson = curriculum.lessons.find((l) => l.id === selectedLessonId) || null;
+  const sortedTracks = [...curriculum.tracks].sort((a, b) => a.name.localeCompare(b.name));
+  const trackModules = [...curriculum.modules]
+    .filter((m) => m.trackId === activeTrackId)
+    .sort((a, b) => a.order - b.order);
+  const sortedModules = trackModules;
 
   const handleCompleteLesson = async () => {
     if (!activeLesson) return;
@@ -115,16 +159,34 @@ export default function CurriculumView({
       <div className={`lg:col-span-5 space-y-6 ${activeLesson ? 'hidden lg:block' : 'block'}`}>
         <div className="space-y-1">
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Your Curriculum Pipeline</h2>
-          <p className="text-slate-500 text-sm">Step-by-step masterclass structured by expert reviewers.</p>
+          <p className="text-slate-500 text-sm">Pick a track to explore lessons, examples, and projects.</p>
+        </div>
+
+        {/* Track Selection Tabs */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {sortedTracks.map((track) => {
+            const isActiveTrack = track.id === activeTrackId;
+            return (
+              <button
+                key={track.id}
+                onClick={() => {
+                  setActiveTrackId(track.id);
+                  setCurrentTrackId(track.id);
+                }}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all border ${isActiveTrack ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}>
+                {track.name}
+              </button>
+            );
+          })}
         </div>
 
         {/* Module Navigation Tabs */}
         <div className="flex flex-col space-y-2 bg-white p-2 border border-slate-200 rounded-2xl shadow-sm">
-          {sortedModules.map((mod) => {
+          {trackModules.map((mod) => {
             const isActive = activeModuleId === mod.id;
             const locked = isModuleLocked(mod);
-            const modLessons = curriculum.lessons.filter(l => l.moduleId === mod.id);
-            const modCompleted = modLessons.filter(l => isCompleted(l.id)).length;
+            const modLessons = curriculum.lessons.filter((l) => l.moduleId === mod.id);
+            const modCompleted = modLessons.filter((l) => isCompleted(l.id)).length;
 
             return (
               <button

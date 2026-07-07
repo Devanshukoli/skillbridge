@@ -244,7 +244,18 @@ export async function supabaseCreateUser(user: User, passwordHash: string): Prom
 
     return true;
   } catch (err) {
+    // Provide actionable guidance if the schema/tables are missing in Supabase
     console.error('[Supabase] Error creating user:', err);
+    try {
+      const code = (err as any)?.code;
+      if (code === 'PGRST205') {
+        console.error('[Supabase] Detected missing table (PGRST205). The database schema is not applied in your Supabase project.');
+        console.error('[Supabase] Please run the following SQL in your Supabase project SQL editor to create the required tables:');
+        console.error(getSupabaseSQLSchema());
+      }
+    } catch (inner) {
+      // ignore
+    }
     return false;
   }
 }
@@ -378,6 +389,12 @@ export async function seedSupabaseIfNeeded(localDb: any) {
     console.log('[Supabase] Seeding complete or skipped (already seeded).');
   } catch (err) {
     console.warn('[Supabase] Seed check failed (likely because tables are not created yet in Supabase SQL editor):', err);
+    try {
+      console.warn('[Supabase] If you have not created the SkillBridge tables in your Supabase project, run the SQL below in the Supabase SQL editor:');
+      console.warn(getSupabaseSQLSchema());
+    } catch (inner) {
+      // ignore
+    }
   }
 }
 
@@ -445,13 +462,29 @@ export async function supabaseGetCurriculum(userId: string): Promise<any | null>
       reviewedAt: s.reviewed_at || undefined
     }));
 
+    const trackScores: Record<string, number> = {};
+    progress.forEach((progressItem) => {
+      if (progressItem.type !== 'lesson' && progressItem.type !== 'project') return;
+      const lesson = lessons.find((item) => item.id === progressItem.itemId);
+      const project = projects.find((item) => item.id === progressItem.itemId);
+      let trackId = lesson ? modules.find((item) => item.id === lesson.moduleId)?.trackId : undefined;
+      if (!trackId && project) {
+        trackId = project.trackId;
+      }
+      if (!trackId) return;
+      trackScores[trackId] = (trackScores[trackId] || 0) + 1;
+    });
+
+    const currentTrackId = Object.keys(trackScores).sort((a, b) => trackScores[b] - trackScores[a])[0] || tracks?.[0]?.id || '';
+
     return {
       tracks: tracks || [],
       modules,
       lessons,
       projects,
       progress,
-      submissions
+      submissions,
+      currentTrackId
     };
   } catch (err) {
     console.error('[Supabase] Error loading curriculum:', err);

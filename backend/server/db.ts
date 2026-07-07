@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import { User, Track, Module, Lesson, Project, Submission, Progress, Claim } from '../../frontend/src/types';
 
 const DB_FILE = path.join(process.cwd(), 'db.json');
+const BUILT_IN_TRACK_IDS = new Set(['track-backend-1']);
 
 interface DatabaseSchema {
   users: User[];
@@ -16,6 +17,7 @@ interface DatabaseSchema {
   submissions: Submission[];
   progress: Progress[];
   claims: Claim[];
+  notifiedTrackIds: string[];
 }
 
 const defaultDb: DatabaseSchema = {
@@ -27,7 +29,8 @@ const defaultDb: DatabaseSchema = {
   projects: [],
   submissions: [],
   progress: [],
-  claims: []
+  claims: [],
+  notifiedTrackIds: []
 };
 
 // Helper to load DB
@@ -38,7 +41,13 @@ export function loadDb(): DatabaseSchema {
       return defaultDb;
     }
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(raw);
+    const result = JSON.parse(raw) as DatabaseSchema;
+    if (!Array.isArray(result.notifiedTrackIds)) {
+      result.notifiedTrackIds = result.tracks
+        .filter((track) => BUILT_IN_TRACK_IDS.has(track.id))
+        .map((track) => track.id);
+    }
+    return result;
   } catch (err) {
     console.error('Error loading DB, returning empty', err);
     return defaultDb;
@@ -51,6 +60,42 @@ export function saveDb(data: DatabaseSchema): void {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
     console.error('Error saving DB', err);
+  }
+}
+
+async function notifyNewTracks(db: DatabaseSchema) {
+  db.notifiedTrackIds = db.notifiedTrackIds || [];
+  for (const track of db.tracks) {
+    if (BUILT_IN_TRACK_IDS.has(track.id) && !db.notifiedTrackIds.includes(track.id)) {
+      db.notifiedTrackIds.push(track.id);
+    }
+  }
+  const freshTracks = db.tracks.filter((track) => !db.notifiedTrackIds.includes(track.id));
+  if (freshTracks.length === 0) return;
+
+  const recipients = db.users.map((user) => user.email);
+  if (recipients.length === 0) {
+    console.warn('[Tracks] No users found to notify about new tracks.');
+    return;
+  }
+
+  try {
+    const { sendTrackNotificationEmail } = await import('../modules/notifications/trackNotificationEmail');
+    const result = await sendTrackNotificationEmail({
+      tracks: freshTracks,
+      recipients,
+      appUrl: process.env.APP_URL || 'http://localhost:3000'
+    });
+
+    if (result.sent) {
+      db.notifiedTrackIds.push(...freshTracks.map((track) => track.id));
+      saveDb(db);
+      console.log(`[Tracks] Sent notifications for ${freshTracks.length} new track(s) to ${recipients.length} users.`);
+    } else {
+      console.warn('[Tracks] Notification email failed:', result.reason, result.error);
+    }
+  } catch (err) {
+    console.error('[Tracks] Failed to send new track notifications:', err);
   }
 }
 
@@ -955,4 +1000,5 @@ This pattern is identical to the backend production APIs of major tech companies
   }
 
   saveDb(db);
+  await notifyNewTracks(db);
 }

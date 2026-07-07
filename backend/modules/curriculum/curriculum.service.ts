@@ -20,13 +20,29 @@ export class CurriculumService {
     const userProgress = db.progress.filter(p => p.userId === user.id);
     const userSubmissions = db.submissions.filter(s => s.userId === user.id);
 
+    const trackScores: Record<string, number> = {};
+    userProgress.forEach((progressItem) => {
+      if (progressItem.type !== 'lesson' && progressItem.type !== 'project') return;
+      const lesson = db.lessons.find((l) => l.id === progressItem.itemId);
+      const project = db.projects.find((p) => p.id === progressItem.itemId);
+      let trackId = lesson ? db.modules.find((m) => m.id === lesson.moduleId)?.trackId : undefined;
+      if (!trackId && project) {
+        trackId = project.trackId;
+      }
+      if (!trackId) return;
+      trackScores[trackId] = (trackScores[trackId] || 0) + 1;
+    });
+
+    const currentTrackId = Object.keys(trackScores).sort((a, b) => trackScores[b] - trackScores[a])[0] || db.tracks[0]?.id || '';
+
     return {
       tracks: db.tracks,
       modules: db.modules,
       lessons: db.lessons,
       projects: db.projects,
       progress: userProgress,
-      submissions: userSubmissions
+      submissions: userSubmissions,
+      currentTrackId
     };
   }
 

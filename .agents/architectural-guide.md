@@ -11,6 +11,8 @@ The app supports:
 - Student registration, login, logout, password changes, and Google OAuth sign-in.
 - Student onboarding and profile editing.
 - Curriculum browsing, lesson completion, and project submission.
+- Track discovery, including a sidebar Tracks view for previewing available or newly added paths.
+- Email notification for newly added local JSON tracks when SMTP is configured.
 - Admin review of project submissions.
 - Reward claims for capstone payouts.
 - Local JSON persistence by default, with optional Supabase persistence when Supabase env vars are present.
@@ -44,6 +46,7 @@ The app supports:
         |-- auth/
         |-- profile/
         |-- curriculum/
+        |-- notifications/
         |-- submissions/
         `-- claims/
 ```
@@ -80,6 +83,7 @@ Entry path:
 `App.tsx` is not using React Router. It keeps `activeSection` in local state and renders one primary view at a time:
 
 - `dashboard` -> `DashboardView`
+- `tracks` -> `TracksView`
 - `curriculum` -> `CurriculumView`
 - `submissions` -> `ProjectSubmissionView`
 - `settings` -> `SettingsView`
@@ -92,6 +96,7 @@ Important frontend state in `App.tsx`:
 - `selectedLessonId`: curriculum reader focus
 - `selectedProjectId`: submission focus
 - `curriculum`: tracks, modules, lessons, projects, progress, submissions
+- `currentTrackId`: currently previewed/enrolled curriculum track id
 - `loadingSession` and `loadingCurriculum`
 
 Important flow:
@@ -184,8 +189,11 @@ Default persistence is `db.json`, managed by `backend/server/db.ts`.
 - `submissions`
 - `progress`
 - `claims`
+- `notifiedTrackIds` - local-only marker for tracks already announced by email
 
-`seedDatabase()` creates default admin/student users plus backend-engineering curriculum data when missing.
+`seedDatabase()` creates default admin/student users plus backend-engineering curriculum data when missing. After seeding, it checks `db.tracks` against `notifiedTrackIds` and can email users about newly added tracks. Built-in seed tracks should be treated as already announced; newly added manual `db.json` tracks are the ones that should trigger notification.
+
+Track notification email lives in `backend/modules/notifications/trackNotificationEmail.ts`. It uses SMTP env vars and sends a single email with users in BCC. If SMTP is not configured, the server logs a warning and leaves the track unmarked so it can be sent later after SMTP is configured.
 
 Optional Supabase persistence is managed by `backend/server/supabase.ts`. When Supabase is enabled, services prefer Supabase helpers over `db.json`. The Supabase adapter maps camelCase TypeScript fields to snake_case table columns, for example:
 
@@ -231,6 +239,12 @@ Known variables:
 - `GOOGLE_CLIENT_SECRET`: Google OAuth client secret for Sign-In.
 - `SUPABASE_URL`: enables Supabase mode when paired with anon key.
 - `SUPABASE_ANON_KEY`: Supabase public anon key.
+- `SMTP_HOST`: SMTP host for track notification email.
+- `SMTP_PORT`: SMTP port for track notification email.
+- `SMTP_SECURE`: set to `true` for secure SMTP transport.
+- `SMTP_USER`: SMTP username.
+- `SMTP_PASS`: SMTP password.
+- `SMTP_FROM`: sender address used for track notification email.
 - `JWT_SECRET`: optional; backend falls back to a hard-coded development secret.
 - `NODE_ENV`: controls dev Vite middleware vs production static serving.
 - `DISABLE_HMR`: used by `vite.config.ts` to disable HMR/file watching in AI Studio-style environments.
@@ -291,8 +305,12 @@ Start with:
 - `db.json` for existing local runtime data.
 - `backend/modules/curriculum/*` for read/complete behavior.
 - `frontend/src/components/CurriculumView.tsx` for presentation.
+- `frontend/src/components/TracksView.tsx` for browsing or previewing available tracks.
+- `backend/modules/notifications/trackNotificationEmail.ts` when changing new-track email behavior.
 
 Lesson content is markdown. Rendering is handled by `MarkdownRenderer`.
+
+When adding tracks directly to `db.json`, add matching `modules`, `lessons`, and optional `projects`. Do not add the new track id to `notifiedTrackIds` unless it has already been announced; otherwise the next local seed run can notify users by email.
 
 ### Change project submission or review
 

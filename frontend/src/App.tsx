@@ -5,6 +5,7 @@ import AuthView from './components/AuthView';
 import OnboardingFlow from './components/OnboardingFlow';
 import DashboardView from './components/DashboardView';
 import CurriculumView from './components/CurriculumView';
+import TracksView from './components/TracksView';
 import ProjectSubmissionView from './components/ProjectSubmissionView';
 import SettingsView from './components/SettingsView';
 import AdminView from './components/AdminView';
@@ -16,6 +17,7 @@ export default function App() {
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [currentTrackId, setCurrentTrackId] = useState<string>('');
   
   const [curriculum, setCurriculum] = useState<{
     tracks: Track[];
@@ -24,13 +26,15 @@ export default function App() {
     projects: Project[];
     progress: Progress[];
     submissions: Submission[];
+    currentTrackId?: string;
   }>({
     tracks: [],
     modules: [],
     lessons: [],
     projects: [],
     progress: [],
-    submissions: []
+    submissions: [],
+    currentTrackId: ''
   });
 
   const [loadingSession, setLoadingSession] = useState(true);
@@ -89,6 +93,9 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setCurriculum(data);
+        if (data.currentTrackId) {
+          setCurrentTrackId(data.currentTrackId);
+        }
       }
     } catch (err) {
       console.error('Curriculum sync failed', err);
@@ -189,6 +196,18 @@ export default function App() {
             setSelectedLessonId={setSelectedLessonId}
             setActiveSection={setActiveSection}
             setSelectedProjectId={setSelectedProjectId}
+            currentTrackId={currentTrackId}
+            setCurrentTrackId={setCurrentTrackId}
+          />
+        )}
+
+        {activeSection === 'tracks' && (
+          <TracksView
+            curriculum={curriculum}
+            onViewTrack={(trackId) => {
+              setCurrentTrackId(trackId);
+              setActiveSection('curriculum');
+            }}
           />
         )}
 
