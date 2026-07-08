@@ -1,5 +1,6 @@
 import { User, Submission, Progress } from '../../../frontend/src/types';
 import { loadDb, saveDb } from '../../server/db';
+import { loadCompiledContent } from '../../content/content-store';
 import {
   isSupabaseEnabled,
   supabaseSubmitProject,
@@ -23,7 +24,8 @@ export class SubmissionsService {
       }
     } else {
       const db = loadDb();
-      const project = db.projects.find(p => p.id === projectId);
+      const content = loadCompiledContent();
+      const project = content.projects.find(p => p.id === projectId);
       projectExists = !!project;
       alreadyApproved = db.submissions.some(s => s.userId === user.id && s.projectId === projectId && s.status === 'approved');
     }
@@ -88,9 +90,10 @@ export class SubmissionsService {
     }
 
     const db = loadDb();
+    const content = loadCompiledContent();
     return db.submissions.map(sub => {
       const user = db.users.find(u => u.id === sub.userId);
-      const project = db.projects.find(p => p.id === sub.projectId);
+      const project = content.projects.find(p => p.id === sub.projectId);
       return {
         ...sub,
         projectTitle: project?.title || 'Unknown Project',
@@ -130,7 +133,8 @@ export class SubmissionsService {
 
     // Credit points/money if approved
     if (status === 'approved') {
-      const project = db.projects.find(p => p.id === sub.projectId);
+      const content = loadCompiledContent();
+      const project = content.projects.find(p => p.id === sub.projectId);
       const student = db.users.find(u => u.id === sub.userId);
       
       if (project && student) {

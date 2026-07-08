@@ -1,0 +1,28 @@
+id: proj-prac-1
+type: practice
+title: 'Practice: Build a Todo REST API with Joi Validation'
+description: >-
+  Implement a comprehensive Express.js REST API with full CRUD endpoints for a Todo manager, but
+  incorporate proper schema validation using Joi or schema assertions. This ensures no malformed
+  objects enter your systems.
+requirements:
+  - Initialize an Express server on Port 3000.
+  - Implement GET /todos, GET /todos/:id, POST /todos, PUT /todos/:id, and DELETE /todos/:id.
+  - Use an array-based or JSON-file-based persistent database layer.
+  - >-
+    Implement input body validation: Title is required (min 3 chars), completed must be a boolean
+    (defaults to false), priority must be one of [low, medium, high].
+  - >-
+    Return structured 400 Bad Request error if validation fails, displaying detail on which
+    parameters are invalid.
+rubric:
+  - 'Endpoint compliance: All 5 CRUD methods work correctly.'
+  - >-
+    Validation strength: POSTing a todo without a title or with invalid priority is safely blocked
+    and returns 400.
+  - >-
+    Error Resilience: Malformed JSON bodies are caught by error handling middleware and do not crash
+    the server.
+  - 'Code formatting: Code is well-commented and organized.'
+rewardPoints: 150
+rewardMoney: 0

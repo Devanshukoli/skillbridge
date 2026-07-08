@@ -1,0 +1,47 @@
+id: proj-cap-1
+type: capstone
+title: 'Capstone: Production-Style E-Commerce REST API Backend'
+description: >-
+  This is your centerpiece. You are building the complete core engine for a modern E-Commerce
+  backend service. This project requires implementing secure JSON Web Token authentication, product
+  inventory management, a multi-item persistent shopping cart, checkout order placement, detailed
+  validation schemas, modular controllers, and structured custom error classes.
+requirements:
+  - >-
+    User Auth system: Register, Login, and a protected GET /api/users/me endpoint. Issue secure JWTs
+    and authenticate them using a custom `requireAuth` middleware.
+  - >-
+    Products Catalog (GET /products, GET /products/:id). Only Admins can execute CRUD (POST, PUT,
+    DELETE) on products.
+  - >-
+    Shopping Cart system (POST /cart/items adds an item, GET /cart gets the cart, DELETE
+    /cart/items/:id removes item). Carts are user-specific and persistent.
+  - >-
+    Order checkout system (POST /orders/checkout takes current cart items, checks product inventory
+    stock, reduces inventory, computes total price, clears cart, and creates a pending Order
+    record).
+  - 'Structured modular organization: controllers/, routes/, middlewares/, utils/.'
+  - >-
+    Advanced error Handling: Use a global error handling middleware, throwing custom error classes
+    (e.g. NotFoundError, BadRequestError, UnauthorizedError) to return standardized errors.
+  - >-
+    Extensive README.md outlining setup instructions, architecture decisions, database models, and
+    sample cURL requests.
+rubric:
+  - >-
+    Security: API endpoints for profile, cart, and checkout are strictly protected by JWT
+    verification.
+  - >-
+    Admin Boundaries: Trying to create/update products with a student JWT is safely blocked with 403
+    Forbidden.
+  - >-
+    Inventory Integrity: Checking out a quantity larger than product stock throws a 400 Bad Request
+    and rolls back cart transactions.
+  - >-
+    Architecture quality: Modular file division, no inline DB setups, robust try-catch wrappers, and
+    standard logging.
+  - >-
+    Documentation: High-quality README.md outlining exact setup commands and complete API
+    specifications.
+rewardPoints: 500
+rewardMoney: 100

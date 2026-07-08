@@ -2,8 +2,9 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { loadDb, seedDatabase } from './server/db';
+import { seedDatabase } from './server/db';
 import { seedSupabaseIfNeeded } from './server/supabase';
+import { loadCompiledContent } from './content/content-store';
 
 // Modular Route Imports
 import authRouter from './modules/auth/auth.routes';
@@ -35,8 +36,7 @@ app.use(errorHandler);
 // Run background database seeders
 seedDatabase()
   .then(() => {
-    const db = loadDb();
-    return seedSupabaseIfNeeded(db);
+    return seedSupabaseIfNeeded(loadCompiledContent());
   })
   .catch(console.error);
 

@@ -1,5 +1,6 @@
 import { User, Progress } from '../../../frontend/src/types';
 import { loadDb, saveDb } from '../../server/db';
+import { loadCompiledContent } from '../../content/content-store';
 import {
   isSupabaseEnabled,
   supabaseGetCurriculum,
@@ -17,15 +18,16 @@ export class CurriculumService {
     }
 
     const db = loadDb();
+    const content = loadCompiledContent();
     const userProgress = db.progress.filter(p => p.userId === user.id);
     const userSubmissions = db.submissions.filter(s => s.userId === user.id);
 
     const trackScores: Record<string, number> = {};
     userProgress.forEach((progressItem) => {
       if (progressItem.type !== 'lesson' && progressItem.type !== 'project') return;
-      const lesson = db.lessons.find((l) => l.id === progressItem.itemId);
-      const project = db.projects.find((p) => p.id === progressItem.itemId);
-      let trackId = lesson ? db.modules.find((m) => m.id === lesson.moduleId)?.trackId : undefined;
+      const lesson = content.lessons.find((l) => l.id === progressItem.itemId);
+      const project = content.projects.find((p) => p.id === progressItem.itemId);
+      let trackId = lesson ? content.modules.find((m) => m.id === lesson.moduleId)?.trackId : undefined;
       if (!trackId && project) {
         trackId = project.trackId;
       }
@@ -33,13 +35,13 @@ export class CurriculumService {
       trackScores[trackId] = (trackScores[trackId] || 0) + 1;
     });
 
-    const currentTrackId = Object.keys(trackScores).sort((a, b) => trackScores[b] - trackScores[a])[0] || db.tracks[0]?.id || '';
+    const currentTrackId = Object.keys(trackScores).sort((a, b) => trackScores[b] - trackScores[a])[0] || content.tracks[0]?.id || '';
 
     return {
-      tracks: db.tracks,
-      modules: db.modules,
-      lessons: db.lessons,
-      projects: db.projects,
+      tracks: content.tracks,
+      modules: content.modules,
+      lessons: content.lessons,
+      projects: content.projects,
       progress: userProgress,
       submissions: userSubmissions,
       currentTrackId
@@ -54,7 +56,8 @@ export class CurriculumService {
     }
 
     const db = loadDb();
-    const lesson = db.lessons.find(l => l.id === lessonId);
+    const content = loadCompiledContent();
+    const lesson = content.lessons.find(l => l.id === lessonId);
     if (!lesson) {
       throw new Error('Lesson not found');
     }

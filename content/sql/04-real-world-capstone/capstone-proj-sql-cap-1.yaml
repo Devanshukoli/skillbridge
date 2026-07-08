@@ -1,0 +1,45 @@
+id: proj-sql-cap-1
+type: capstone
+title: 'Capstone: Design & Query a Production-Style E-Commerce Database'
+description: >-
+  This is your centerpiece for the SQL track: design a properly normalized multi-table relational
+  schema from scratch, then write the full set of queries a real backend service would need to power
+  it — from checkout logic to admin analytics dashboards.
+requirements:
+  - >-
+    Design a normalized (3NF) schema with at minimum: customers, products, categories, orders,
+    order_items, and inventory tables, with correct primary/foreign keys and constraints (NOT NULL,
+    UNIQUE, CHECK where appropriate).
+  - >-
+    Write a transactional checkout query sequence: verify stock, deduct inventory, insert an order +
+    order_items, all wrapped in BEGIN/COMMIT with a ROLLBACK path for insufficient stock.
+  - >-
+    Write an admin analytics query set: monthly revenue trend, top 10 products by revenue, and
+    customers with no orders in the last 90 days (churn risk).
+  - >-
+    Add at least 3 indexes justified by real query patterns you wrote above, with EXPLAIN ANALYZE
+    output showing the plan before and after each index.
+  - >-
+    Write at least one query using a CTE and window function together (e.g. ranking top product per
+    category).
+  - >-
+    Extensive README.md documenting the ER structure (tables + relationships), normalization
+    decisions, and sample query outputs.
+rubric:
+  - >-
+    Schema quality: correctly normalized to 3NF, with sensible constraints preventing invalid data
+    at the DB level.
+  - >-
+    Transaction correctness: checkout logic is atomic — a simulated failure mid-transaction leaves
+    no partial state.
+  - >-
+    Query correctness: all analytics queries produce accurate results against seed data, with
+    correct JOIN types chosen per question.
+  - >-
+    Performance rigor: each index is backed by measured EXPLAIN ANALYZE before/after evidence, not
+    guesswork.
+  - >-
+    Documentation: README clearly explains schema design reasoning to someone who has never seen it
+    before.
+rewardPoints: 500
+rewardMoney: 100

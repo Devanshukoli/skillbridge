@@ -1,0 +1,361 @@
+{
+  "tracks": [
+    {
+      "id": "track-backend-1",
+      "name": "Backend Engineer (Node.js + Express)",
+      "description": "Master server-side engineering. Learn everything from HTTP fundamentals to REST APIs, databases, authentication, and error handling.",
+      "icon": "Server"
+    },
+    {
+      "id": "track-sql-1",
+      "name": "SQL & Relational Databases",
+      "description": "Go from writing your first SELECT to designing and optimizing production-grade relational schemas. Covers querying, joins, subqueries, transactions, normalization, and indexing/performance.",
+      "icon": "Database"
+    }
+  ],
+  "modules": [
+    {
+      "id": "mod-1",
+      "title": "Node.js & Express Fundamentals",
+      "order": 1,
+      "trackId": "track-backend-1"
+    },
+    {
+      "id": "mod-2",
+      "title": "Worked Examples (Deep Dives)",
+      "order": 2,
+      "trackId": "track-backend-1"
+    },
+    {
+      "id": "mod-3",
+      "title": "Practice Projects",
+      "order": 3,
+      "trackId": "track-backend-1"
+    },
+    {
+      "id": "mod-4",
+      "title": "Real-World Capstone",
+      "order": 4,
+      "trackId": "track-backend-1"
+    },
+    {
+      "id": "mod-sql-1",
+      "title": "SQL Fundamentals",
+      "order": 1,
+      "trackId": "track-sql-1"
+    },
+    {
+      "id": "mod-sql-2",
+      "title": "Worked Examples (Deep Dives)",
+      "order": 2,
+      "trackId": "track-sql-1"
+    },
+    {
+      "id": "mod-sql-3",
+      "title": "Practice Projects",
+      "order": 3,
+      "trackId": "track-sql-1"
+    },
+    {
+      "id": "mod-sql-4",
+      "title": "Real-World Capstone",
+      "order": 4,
+      "trackId": "track-sql-1"
+    }
+  ],
+  "lessons": [
+    {
+      "id": "less-1",
+      "title": "What is Node.js and the Event Loop?",
+      "order": 1,
+      "estimatedMinutes": 15,
+      "moduleId": "mod-1",
+      "content": "### Introduction to Node.js\n\nNode.js is an open-source, cross-platform JavaScript runtime environment that executes JavaScript code outside a web browser. Historically, JavaScript ran exclusively in browsers. Node.js changed this by using Google Chrome's high-performance **V8 Engine** to run JavaScript on the server side.\n\n#### Key Features of Node.js\n\n1. **Asynchronous and Event-Driven**: All APIs of the Node.js library are asynchronous (non-blocking). Node-based servers never wait for an API to return data. Instead, they move to the next API, using a notification mechanism called **Events** to receive responses.\n2. **Single-Threaded**: Node.js operates on a single thread using event looping, allowing it to handle thousands of concurrent connections without the overhead of thread context-switching.\n3. **No Buffering**: Node.js applications output data in chunks (streaming), which increases responsiveness.\n\n---\n\n### Understanding the Event Loop\n\nThe **Event Loop** is the secret sauce that enables Node.js to perform non-blocking I/O operations, despite being single-threaded. \n\nNormally, web servers create a new thread for every incoming connection. If that thread needs to query a database (I/O), the thread \"blocks\" and waits. This wastes memory and CPU.\n\nNode.js does I/O differently:\n1. When an asynchronous operation (like reading a file or querying a DB) is started, Node.js offloads it to the system kernel or a background thread pool (**Libuv**).\n2. The main thread continues executing other code.\n3. When the database query finishes, a callback function is pushed to the **Callback Queue**.\n4. The **Event Loop** constantly monitors the Call Stack and the Callback Queue. If the Call Stack is empty, it grabs the first task from the queue and pushes it onto the stack to be executed.\n\n#### Visualizing the Lifecycle\n```\n[ Incoming Request ] ──> [ Event Demultiplexer / Libuv Threadpool ]\n                                      │\n                                      ▼ (Operation Finishes)\n[ Main Callback Queue ] <─────────────┘\n          │\n          ▼ (If Call Stack is empty)\n[ Execute Callback in Single Thread ]\n```\n\n#### Code Example: Blocking vs. Non-blocking\n\n**Blocking (Synchronous):**\n```javascript\nconst fs = require('fs');\nconsole.log('1. Reading file...');\nconst data = fs.readFileSync('large-file.txt', 'utf8');\nconsole.log('2. File read finished.');\nconsole.log('3. Proceeding with other work!');\n// Output order: 1 -> 2 -> 3\n```,\n\n**Non-Blocking (Asynchronous):**\n```javascript\nconst fs = require('fs');\nconsole.log('1. Reading file...');\nfs.readFile('large-file.txt', 'utf8', (err, data) => {\n  if (err) throw err;\n  console.log('2. File read finished!');\n});\nconsole.log('3. Proceeding with other work immediately!');\n// Output order: 1 -> 3 -> 2\n```\n\nUnderstanding this asynchronous, non-blocking flow is absolutely essential for writing clean, bug-free Node.js servers!"
+    },
+    {
+      "id": "less-2",
+      "title": "Modules, npm, and package.json",
+      "order": 2,
+      "estimatedMinutes": 12,
+      "moduleId": "mod-1",
+      "content": "### Managing Dependencies in Node.js\n\nIn modern software development, we rarely write everything from scratch. We rely on reusable modules. Node.js has a built-in module system and uses **npm** (Node Package Manager) to manage third-party code.\n\n---\n\n### CommonJS vs. ES Modules (ESM)\n\nNode.js supports two module formats:\n1. **CommonJS (CJS)**: The legacy default. Uses `require()` and `module.exports`.\n2. **ES Modules (ESM)**: The modern JavaScript standard. Uses `import` and `export`.\n\n**CommonJS Example:**\n```javascript\n// math.js\nconst add = (a, b) => a + b;\nmodule.exports = { add };\n\n// index.js\nconst { add } = require('./math');\nconsole.log(add(2, 3)); // 5\n```\n\n**ES Modules Example:**\n```javascript\n// math.js\nexport const add = (a, b) => a + b;\n\n// index.js\nimport { add } from './math.js';\nconsole.log(add(2, 3)); // 5\n```\n\nTo enable ES Modules in a Node.js project, add `\"type\": \"module\"` to your `package.json`.\n\n---\n\n### Understanding package.json\n\nThe `package.json` file is the manifesto of your Node.js application. It acts as a recipe book, metadata holder, and script runner.\n\nHere is a look at a standard `package.json`:\n```json\n{\n  \"name\": \"my-express-server\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"start\": \"node server.js\",\n    \"dev\": \"nodemon server.js\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.21.2\"\n  },\n  \"devDependencies\": {\n    \"nodemon\": \"^3.0.1\"\n  }\n}\n```\n\n- **scripts**: Custom commands you run using `npm run <script-name>` (e.g. `npm run dev`).\n- **dependencies**: Packages required for the application to run in production.\n- **devDependencies**: Packages only needed for local development and testing (e.g., test runners, bundlers, linters).\n- **Caret (^)**: Tells npm that it can update to any minor or patch release (e.g., `^4.1.0` can upgrade to `4.12.0` but not `5.0.0`).\n- **Tilde (~)**: Restricts updates to patch versions only (e.g., `~1.2.3` can upgrade to `1.2.9` but not `1.3.0`).\n\n---\n\n### The Role of package-lock.json\n\nWhen you run `npm install`, npm automatically generates a `package-lock.json` file. \nThis file describes the **exact tree** of dependencies that were installed. It guarantees that any other developer (or production server) running `npm install` gets the exact same dependency versions, eliminating the dreaded *\"It works on my machine!\"* bugs."
+    },
+    {
+      "id": "less-3",
+      "title": "Creating a Basic HTTP Server with Core Http",
+      "order": 3,
+      "estimatedMinutes": 15,
+      "moduleId": "mod-1",
+      "content": "### Before Express: Standard Node.js Networking\n\nBefore diving into Express, it's vital to see how Node.js handles HTTP networking natively. This builds an appreciation for what Express does under the hood.\n\nNode.js comes equipped with a built-in `http` module that can spin up a fully functioning web server with just a few lines of code.\n\n---\n\n### Writing a Basic HTTP Server\n\nHere is how you create a basic server that listens on port `3000` and responds with a greeting:\n\n```javascript\nimport http from 'http';\n\nconst PORT = 3000;\n\n// Create HTTP server\nconst server = http.createServer((req, res) => {\n  // Set response headers\n  res.writeHead(200, { 'Content-Type': 'application/json' });\n\n  // Send the response body\n  const responseData = {\n    message: 'Hello, World! This server runs on pure Node.js.',\n    timestamp: new Date()\n  };\n\n  res.end(JSON.stringify(responseData));\n});\n\n// Start listening\nserver.listen(PORT, '0.0.0.0', () => {\n  console.log(`Server is listening on http://localhost:${PORT}`);\n});\n```\n\n#### Key Concepts\n\n1. **req (IncomingMessage)**: An object containing details about the client's request, such as `req.url`, `req.method` (GET, POST), and headers.\n2. **res (ServerResponse)**: A writable stream used to send headers and data back to the client. You write headers with `res.writeHead()` or `res.setHeader()` and finish the request with `res.end()`.\n\n---\n\n### Routing on Core Http (The Hard Way)\n\nIn a real server, you want to return different responses for different URLs (e.g., `/users` vs `/products`). Doing this with core HTTP requires parsing `req.url` manually:\n\n```javascript\nconst server = http.createServer((req, res) => {\n  const url = req.url;\n  const method = req.method;\n\n  if (url === '/' && method === 'GET') {\n    res.writeHead(200, { 'Content-Type': 'text/plain' });\n    res.end('Welcome to the Home Page!');\n  } else if (url === '/api/users' && method === 'GET') {\n    res.writeHead(200, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify([{ id: 1, name: 'Alice' }]));\n  } else {\n    res.writeHead(404, { 'Content-Type': 'text/plain' });\n    res.end('Route Not Found');\n  }\n});\n```\n\nAs you can see, manually checking methods, routes, headers, and parsing request bodies in core Node.js gets incredibly tedious as the server grows. This is exactly why we use frameworks like **Express**!"
+    },
+    {
+      "id": "less-4",
+      "title": "Introduction to Express: Routing and Middleware",
+      "order": 4,
+      "estimatedMinutes": 20,
+      "moduleId": "mod-1",
+      "content": "### Welcome to Express\n\n**Express** is a minimal and flexible Node.js web application framework that provides a robust set of features for web and mobile applications. It acts as a wrapper around Node's core HTTP module, making routing, request handling, and asset serving incredibly elegant.\n\n---\n\n### Installing and Setting Up Express\n\nFirst, we install Express:\n```bash\nnpm install express\n```\n\nNow, let's look at a basic Express server:\n\n```javascript\nimport express from 'express';\n\nconst app = express();\nconst PORT = 3000;\n\n// Setup a JSON parser middleware\napp.use(express.json());\n\n// A simple GET route\napp.get('/', (req, res) => {\n  res.send('Welcome to the Express Server!');\n});\n\n// A simple JSON API route\napp.get('/api/info', (req, res) => {\n  res.json({\n    framework: 'Express',\n    language: 'TypeScript/JavaScript',\n    status: 'healthy'\n  });\n});\n\napp.listen(PORT, () => {\n  console.log(`Express server running on port ${PORT}`);\n});\n```\n\n---\n\n### The Power of Middleware\n\nIn Express, everything is built around **Middleware**.\nA middleware function is simply a function that has access to the request object (`req`), the response object (`res`), and the next middleware function in the application’s request-response cycle (usually denoted as `next`).\n\n#### What can Middleware do?\n- Execute any code.\n- Make changes to the request and the response objects (e.g. adding `req.user` after parsing a token).\n- End the request-response cycle.\n- Call the next middleware in the stack using `next()`.\n\n#### Writing a Custom Logging Middleware\n\n```javascript\nconst loggerMiddleware = (req, res, next) => {\n  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);\n  // CRITICAL: Call next() so the request continues to the next route handler!\n  next();\n};\n\n// Mount it globally\napp.use(loggerMiddleware);\n```\n\nIf you forget to call `next()`, your server will \"hang\" indefinitely, and the browser will eventually timeout!"
+    },
+    {
+      "id": "less-5",
+      "title": "Handling JSON, Query, and Route Params",
+      "order": 5,
+      "estimatedMinutes": 15,
+      "moduleId": "mod-1",
+      "content": "### Getting Data from HTTP Requests\n\nWhen building APIs, clients need to send data to the server. There are three primary ways clients send parameter data in Express:\n\n1. **Route Parameters** (for targeting specific resources, e.g., `/api/users/42`)\n2. **Query Parameters** (for filtering, sorting, or paginating, e.g., `/api/users?status=active`)\n3. **Request Body** (for complex payloads, usually JSON, e.g., POSTing a user login)\n\n---\n\n### 1. Route Parameters\n\nRoute parameters are named URL segments that are used to capture values at specific positions in the URL. They are prefixed with a colon (`:`) and populated in `req.params`.\n\n```javascript\n// Route: /api/books/:bookId/authors/:authorId\napp.get('/api/books/:bookId/authors/:authorId', (req, res) => {\n  const { bookId, authorId } = req.params;\n  res.json({\n    message: 'Fetched book details',\n    bookId,\n    authorId\n  });\n});\n```\n\n---\n\n### 2. Query Parameters\n\nQuery parameters are key-value pairs separated by `&` after a question mark (`?`) in the URL. Express automatically parses them into `req.query`.\n\n```javascript\n// URL: /api/search?q=nodejs&limit=10\napp.get('/api/search', (req, res) => {\n  const { q, limit } = req.query;\n  res.json({\n    searchQuery: q,\n    resultsLimit: limit || 5\n  });\n});\n```\n\n---\n\n### 3. Request Body (JSON)\n\nTo accept JSON payloads in POST or PUT requests, you must mount the `express.json()` middleware. This middleware parses incoming JSON streams and attaches the resulting object to `req.body`.\n\n```javascript\napp.use(express.json()); // CRITICAL for parsing req.body!\n\napp.post('/api/users', (req, res) => {\n  const { username, email } = req.body;\n\n  if (!username || !email) {\n    return res.status(400).json({ error: 'Username and Email are required.' });\n  }\n\n  res.status(201).json({\n    message: 'User created successfully',\n    user: { id: Date.now().toString(), username, email }\n  });\n});\n```"
+    },
+    {
+      "id": "less-6",
+      "title": "Error Handling Middleware in Express",
+      "order": 6,
+      "estimatedMinutes": 15,
+      "moduleId": "mod-1",
+      "content": "### Writing Resilient Servers\n\nErrors in backend servers are inevitable. A database connection might fail, a user might submit malformed input, or an external API might throw an exception. If uncaught, these can crash your server.\n\nExpress provides a specialized middleware pattern specifically for catching and handling errors globally.\n\n---\n\n### The Error Handling Signature\n\nWhile standard middleware has three arguments (`req, res, next`), error-handling middleware has **exactly four arguments**: `err, req, res, next`. Express uses the presence of four arguments to recognize it as an error handler.\n\n```javascript\n// Error-handling middleware MUST be defined AFTER all other app.use() and routes!\napp.use((err, req, res, next) => {\n  console.error('SERVER ERROR:', err.stack);\n\n  const status = err.statusCode || 500;\n  res.status(status).json({\n    error: {\n      message: err.message || 'Internal Server Error',\n      status\n    }\n  });\n});\n```\n\n---\n\n### Triggering the Error Handler\n\nTo trigger your error handler from inside your routes, you call `next(err)` with the error object:\n\n```javascript\napp.get('/api/users/:id', (req, res, next) => {\n  try {\n    const user = findUserInDB(req.params.id);\n    if (!user) {\n      // Create custom error and pass to next()\n      const err = new Error('User not found');\n      err.statusCode = 404;\n      return next(err); \n    }\n    res.json(user);\n  } catch (error) {\n    // Passes any database system error onto the error handler!\n    next(error); \n  }\n});\n```\n\nIn modern Express (v5+), errors thrown inside asynchronous handler functions (`async/await`) are automatically forwarded to the error-handling middleware. However, in Express v4, you **must** wrap your async routes in try-catch and call `next(err)` manually to prevent the server from hanging or crashing!"
+    },
+    {
+      "id": "less-7",
+      "title": "Connecting Express to a Database (CRUD)",
+      "order": 7,
+      "estimatedMinutes": 20,
+      "moduleId": "mod-1",
+      "content": "### Database Persistence in Express\n\nA backend server's primary role is often act as a gatekeeper and orchestrator for a persistent database. To do this, we write CRUD endpoints:\n- **C**reate (POST)\n- **R**ead (GET)\n- **U**pdate (PUT / PATCH)\n- **D**elete (DELETE)\n\n---\n\n### Establishing DB Operations\n\nFor an MVP database connection, we often use an ORM (Object-Relational Mapping) like **Prisma** or **Drizzle** to communicate with relational databases like PostgreSQL.\n\nHere is a simplified example of how database CRUD functions map directly to Express routes:\n\n```javascript\nimport express from 'express';\nimport { db } from './db.js'; // Assuming a database connection helper\n\nconst router = express.Router();\n\n// 1. CREATE (Post a new record)\nrouter.post('/api/tasks', async (req, res, next) => {\n  try {\n    const { title, description } = req.body;\n    if (!title) {\n      return res.status(400).json({ error: 'Title is required' });\n    }\n    const newTask = await db.insertTask({ title, description });\n    res.status(201).json(newTask);\n  } catch (err) {\n    next(err);\n  }\n});\n\n// 2. READ (Get all records)\nrouter.get('/api/tasks', async (req, res, next) => {\n  try {\n    const tasks = await db.getAllTasks();\n    res.json(tasks);\n  } catch (err) {\n    next(err);\n  }\n});\n\n// 3. UPDATE (Modify an existing record)\nrouter.put('/api/tasks/:id', async (req, res, next) => {\n  try {\n    const { title, description, completed } = req.body;\n    const updated = await db.updateTask(req.params.id, { title, description, completed });\n    if (!updated) {\n      return res.status(404).json({ error: 'Task not found' });\n    }\n    res.json(updated);\n  } catch (err) {\n    next(err);\n  }\n});\n\n// 4. DELETE (Remove a record)\nrouter.delete('/api/tasks/:id', async (req, res, next) => {\n  try {\n    const success = await db.deleteTask(req.params.id);\n    if (!success) {\n      return res.status(404).json({ error: 'Task not found' });\n    }\n    res.status(204).end(); // 204 No Content\n  } catch (err) {\n    next(err);\n  }\n});\n```\n\nUnderstanding CRUD mapping is the foundation of almost all web service backends!"
+    },
+    {
+      "id": "less-8",
+      "title": "Environment Variables, Config, and Auth Concepts",
+      "order": 8,
+      "estimatedMinutes": 18,
+      "moduleId": "mod-1",
+      "content": "### Secrets Management & Security Fundamentals\n\nWhen publishing server code to GitHub or running it in containers, you must **never** hardcode passwords, API keys, or security tokens directly in your source files. Instead, use environment variables.\n\n---\n\n### Using dotenv for Environment Variables\n\nTo read values from a `.env` file on local development, we use the `dotenv` package.\n\n1. Create a `.env` file in your root folder:\n```env\nPORT=3000\nDATABASE_URL=postgresql://user:pass@localhost:5432/mydb\nJWT_SECRET=my_super_secret_signing_key_abc_123\n```\n\n2. Load them in your code as early as possible:\n```javascript\nimport dotenv from 'dotenv';\ndotenv.config(); // Loads values into process.env\n\nconst port = process.env.PORT || 3000;\nconst jwtSecret = process.env.JWT_SECRET;\n```\n\nAdd your `.env` file to `.gitignore` so secrets are never pushed to git repository!\n\n---\n\n### Web Auth Concepts: Session vs. JWT\n\nThere are two primary ways servers remember who a logged-in user is:\n\n#### 1. Stateful Sessions (Session Cookies)\n- **Flow**: User logs in. Server creates a session record in the DB / Redis. Server returns a unique `Session ID` cookie. On every next request, browser sends the cookie. Server queries the database to see who the cookie belongs to.\n- **Pros**: Easy to revoke sessions instantly.\n- **Cons**: Difficult to scale across multiple servers, requires active DB queries for every request.\n\n#### 2. Stateless Tokens (JSON Web Tokens - JWT)\n- **Flow**: User logs in. Server encodes user ID and details into a payload, signs it using a private secret, and returns the resulting **JWT** string. The browser stores it (e.g., in a cookie or localStorage) and sends it in headers (`Authorization: Bearer <token>`). The server receives the token, checks the cryptographic signature using the secret, and extracts the user ID directly from the decrypted payload **without** querying any database.\n- **Pros**: Extremely fast, stateless, infinitely scalable across multi-server clusters.\n- **Cons**: Revocation is difficult until the token naturally expires.\n\nSkillBridge uses the stateless **JWT** model for seamless authentication and speed!"
+    },
+    {
+      "id": "less-worked-1",
+      "title": "Deep Dive: Notes REST API Walkthrough",
+      "order": 1,
+      "estimatedMinutes": 25,
+      "moduleId": "mod-2",
+      "content": "### Building a Real REST API: Step-by-Step\n\nLet's walk through building a complete, production-ready Notes CRUD API in Node.js and Express. This combines routing, middleware, input validation, and proper error handling.\n\n---\n\n### The Code Architecture\n\nImagine we have a standard directory structure:\n```\n├── package.json\n├── server.js\n├── database.js\n└── routes/\n    └── notes.js\n```\n\n#### Step 1: Setting up database.js (Simple File Storage DB)\n```javascript\nimport fs from 'fs';\nconst DB_FILE = './notes_db.json';\n\nconst readNotes = () => {\n  if (!fs.existsSync(DB_FILE)) return [];\n  return JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));\n};\n\nconst writeNotes = (notes) => {\n  fs.writeFileSync(DB_FILE, JSON.stringify(notes, null, 2));\n};\n\nexport const noteDb = {\n  getAll: () => readNotes(),\n  getById: (id) => readNotes().find(n => n.id === id),\n  create: (title, content) => {\n    const notes = readNotes();\n    const newNote = { id: Date.now().toString(), title, content, createdAt: new Date() };\n    notes.push(newNote);\n    writeNotes(notes);\n    return newNote;\n  },\n  delete: (id) => {\n    const notes = readNotes();\n    const filtered = notes.filter(n => n.id !== id);\n    if (notes.length === filtered.length) return false;\n    writeNotes(filtered);\n    return true;\n  }\n};\n```\n\n#### Step 2: Creating the Router (routes/notes.js)\n```javascript\nimport express from 'express';\nimport { noteDb } from '../database.js';\n\nconst router = express.Router();\n\n// GET all notes\nrouter.get('/', (req, res) => {\n  const notes = noteDb.getAll();\n  res.json(notes);\n});\n\n// GET note by ID\nrouter.get('/:id', (req, res) => {\n  const note = noteDb.getById(req.params.id);\n  if (!note) {\n    return res.status(404).json({ error: 'Note not found' });\n  }\n  res.json(note);\n});\n\n// POST a new note with simple validation\nrouter.post('/', (req, res) => {\n  const { title, content } = req.body;\n  if (!title || title.trim() === '') {\n    return res.status(400).json({ error: 'Title is required' });\n  }\n  const newNote = noteDb.create(title, content || '');\n  res.status(201).json(newNote);\n});\n\n// DELETE a note\nrouter.delete('/:id', (req, res) => {\n  const success = noteDb.delete(req.params.id);\n  if (!success) {\n    return res.status(404).json({ error: 'Note not found' });\n  }\n  res.status(204).send(); // No Content\n});\n\nexport default router;\n```\n\n#### Step 3: Wiring it all up in server.js\n```javascript\nimport express from 'express';\nimport noteRouter from './routes/notes.js';\n\nconst app = express();\nconst PORT = process.env.PORT || 3000;\n\n// Logging Middleware\napp.use((req, res, next) => {\n  console.log(`${req.method} ${req.url}`);\n  next();\n});\n\n// Body Parser Middleware\napp.use(express.json());\n\n// Mount Routers\napp.use('/api/notes', noteRouter);\n\n// Standard 404 Route handler\napp.use((req, res, next) => {\n  res.status(404).json({ error: 'Endpoint not found' });\n});\n\n// Global Error Handler\napp.use((err, req, res, next) => {\n  console.error(err.stack);\n  res.status(500).json({ error: 'Internal Server Error' });\n});\n\napp.listen(PORT, () => {\n  console.log(`Server is running on http://localhost:${PORT}`);\n});\n```\n\n---\n\n### Running the API Locally\nYou can test this API using command-line tools like **cURL** or user-friendly applications like **Postman**:\n\n**To create a note:**\n```bash\ncurl -X POST http://localhost:3000/api/notes \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\"title\": \"My First Note\", \"content\": \"Node.js is extremely powerful.\"}'\n```\n\nThis pattern is identical to the backend production APIs of major tech companies!"
+    },
+    {
+      "id": "less-sql-1",
+      "title": "Introduction to Relational Databases & SELECT",
+      "order": 1,
+      "estimatedMinutes": 15,
+      "moduleId": "mod-sql-1",
+      "content": "### Why SQL Still Runs the World\n\nEvery \"modern\" stack you've heard of — Postgres powering Instagram, MySQL powering YouTube's metadata, even NoSQL databases borrowing SQL-like query languages — eventually comes back to the relational model. Learn this once, deeply, and it transfers everywhere.\n\nA **relational database** organizes data into **tables** (also called relations). Each table has:\n- **Rows** (a.k.a. records/tuples) — one row = one entity, like one customer or one order.\n- **Columns** (a.k.a. fields/attributes) — each column has a name and a data type (`INT`, `VARCHAR`, `BOOLEAN`, `TIMESTAMP`, etc).\n\nThink of a table like a well-organized spreadsheet, except the database engine enforces types, relationships, and constraints for you — a spreadsheet will happily let you put \"banana\" in a price column; a relational database won't.\n\n---\n\n### Your First Query\n\n```sql\nSELECT first_name, last_name, email\nFROM customers\nWHERE country = 'India';\n```\n\nBreaking this down clause by clause:\n- `SELECT` — which columns you want back (use `*` for \"all columns,\" but avoid it in production code — explicit columns are self-documenting and faster).\n- `FROM` — which table you're pulling from.\n- `WHERE` — the row-level filter condition.\n\n---\n\n### Worked Example: From English to SQL, Step by Step\n\n**Problem:** \"Get me the name and price of every product that costs more than $50, cheapest first.\"\n\n**Step 1 — Identify the table.** We're clearly talking about a `products` table.\n\n**Step 2 — Identify the columns you need.** `name`, `price`.\n\n**Step 3 — Identify the filter.** `price > 50`.\n\n**Step 4 — Identify the ordering.** \"Cheapest first\" = ascending order on `price`.\n\n**Step 5 — Assemble it:**\n```sql\nSELECT name, price\nFROM products\nWHERE price > 50\nORDER BY price ASC;\n```\n\nThat five-step mental model — **table → columns → filter → order → assemble** — is exactly how senior engineers mentally parse a product manager's request into a query. It never stops being useful, even when the query gets 10 joins deep."
+    },
+    {
+      "id": "less-sql-2",
+      "title": "Filtering & Sorting: WHERE, ORDER BY, LIMIT",
+      "order": 2,
+      "estimatedMinutes": 15,
+      "moduleId": "mod-sql-1",
+      "content": "### Filtering and Sorting: Making Your Data Behave\n\nRaw tables are noisy. The real skill in SQL is narrowing down exactly the rows you care about — that's what `WHERE`, `ORDER BY`, `LIMIT`, and `OFFSET` are for.\n\n---\n\n### Comparison & Logical Operators\n\n```sql\nSELECT *\nFROM orders\nWHERE status = 'shipped'\n  AND total_amount > 100\n  AND created_at >= '2026-01-01';\n```\n\nCommon operators: `=`, `!=` (or `<>`), `>`, `<`, `>=`, `<=`, `BETWEEN`, `IN`, `LIKE`, `IS NULL`.\n\n```sql\n-- IN: match any value in a list\nSELECT * FROM orders WHERE status IN ('shipped', 'delivered');\n\n-- BETWEEN: inclusive range\nSELECT * FROM orders WHERE total_amount BETWEEN 50 AND 200;\n\n-- LIKE: pattern matching ('%' = any sequence, '_' = single char)\nSELECT * FROM customers WHERE email LIKE '%@gmail.com';\n\n-- NULL checks — NEVER use '= NULL', it silently returns nothing!\nSELECT * FROM orders WHERE shipped_at IS NULL;\n```\n\nThat last one trips up almost every beginner at least once: in SQL, `NULL` means \"unknown,\" and comparing anything to \"unknown\" (even with `=`) yields \"unknown\" — which filters out the row. Always use `IS NULL` / `IS NOT NULL`.\n\n---\n\n### Sorting and Pagination\n\n```sql\nSELECT name, price\nFROM products\nORDER BY price DESC, name ASC   -- ties broken alphabetically\nLIMIT 10 OFFSET 20;             -- \"page 3\" if page size is 10\n```\n\n`ORDER BY` accepts multiple columns — SQL sorts by the first, then breaks ties with the second, and so on.\n\n---\n\n### Worked Example: Building a \"Top 5 Recent High-Value Orders\" Query\n\n**Problem:** \"Show me the 5 most recent orders over $200, most recent first.\"\n\n**Step 1 — Table:** `orders`.\n\n**Step 2 — Filter:** `total_amount > 200`.\n\n**Step 3 — Order:** most recent first → `ORDER BY created_at DESC`.\n\n**Step 4 — Limit:** top 5 → `LIMIT 5`.\n\n**Step 5 — Assemble:**\n```sql\nSELECT id, customer_id, total_amount, created_at\nFROM orders\nWHERE total_amount > 200\nORDER BY created_at DESC\nLIMIT 5;\n```\n\nNotice the order of operations in your head doesn't match the order SQL executes in — SQL actually evaluates `WHERE` before `ORDER BY` before `LIMIT`. Internalizing that execution order (covered fully in Lesson 8) will save you from a LOT of \"why is my query wrong\" debugging sessions."
+    },
+    {
+      "id": "less-sql-3",
+      "title": "Aggregation: GROUP BY, HAVING & Aggregate Functions",
+      "order": 3,
+      "estimatedMinutes": 18,
+      "moduleId": "mod-sql-1",
+      "content": "### Aggregation: Turning Rows Into Insights\n\nSo far we've filtered and sorted individual rows. Now let's *summarize* them — this is where SQL starts to feel like a superpower for reporting and analytics.\n\n---\n\n### The Aggregate Functions\n\n| Function | What it does |\n|---|---|\n| `COUNT(*)` | Number of rows |\n| `SUM(col)` | Total of a numeric column |\n| `AVG(col)` | Average of a numeric column |\n| `MIN(col)` / `MAX(col)` | Smallest / largest value |\n\n```sql\nSELECT COUNT(*) AS total_orders, SUM(total_amount) AS revenue\nFROM orders\nWHERE status = 'completed';\n```\n\n---\n\n### GROUP BY: Aggregating Per Category\n\nAggregates get truly powerful when you bucket rows by a category using `GROUP BY`:\n\n```sql\nSELECT category, COUNT(*) AS num_products, AVG(price) AS avg_price\nFROM products\nGROUP BY category;\n```\n\n**Golden rule:** every non-aggregated column in your `SELECT` must appear in `GROUP BY`. If you `SELECT category, name, AVG(price)` but only `GROUP BY category`, most databases will throw an error — SQL genuinely doesn't know which `name` to show you for a whole group of rows.\n\n---\n\n### HAVING vs. WHERE (This Is a FAANG Interview Favorite)\n\n- `WHERE` filters **rows** *before* grouping happens.\n- `HAVING` filters **groups** *after* aggregation happens.\n\n```sql\nSELECT category, AVG(price) AS avg_price\nFROM products\nWHERE in_stock = true          -- filter rows first\nGROUP BY category\nHAVING AVG(price) > 100;       -- then filter the resulting groups\n```\n\nYou cannot write `WHERE AVG(price) > 100` — at the point `WHERE` executes, the average hasn't been computed yet. This ordering trips up even experienced engineers under interview pressure, so drill it until it's automatic.\n\n---\n\n### Worked Example: \"Which Categories Are Underperforming?\"\n\n**Problem:** \"Find categories with fewer than 10 completed orders this year, along with their total revenue.\"\n\n**Step 1 — Tables:** `orders` joined conceptually to `category` (we'll do real joins in Lesson 4 — for now assume `orders` has a `category` column directly).\n\n**Step 2 — Row filter:** `status = 'completed' AND created_at >= '2026-01-01'`.\n\n**Step 3 — Group:** by `category`.\n\n**Step 4 — Group filter:** `COUNT(*) < 10`.\n\n**Step 5 — Assemble:**\n```sql\nSELECT category, COUNT(*) AS orders_this_year, SUM(total_amount) AS revenue\nFROM orders\nWHERE status = 'completed' AND created_at >= '2026-01-01'\nGROUP BY category\nHAVING COUNT(*) < 10\nORDER BY revenue ASC;\n```\n\nThat's a real dashboard query — the kind a product manager would actually ask for in a standup."
+    },
+    {
+      "id": "less-sql-4",
+      "title": "JOINs Deep Dive: INNER, LEFT, RIGHT, FULL & Self Joins",
+      "order": 4,
+      "estimatedMinutes": 22,
+      "moduleId": "mod-sql-1",
+      "content": "### JOINs: Where SQL Gets Its Reputation for Being \"Hard\" (It Isn't)\n\nReal databases split data across multiple tables to avoid duplication (that's normalization — Lesson 7). JOINs are how you stitch that data back together at query time.\n\n---\n\n### The Four Joins You Actually Need\n\nImagine `customers` (id, name) and `orders` (id, customer_id, total_amount).\n\n**INNER JOIN** — only rows that match in both tables:\n```sql\nSELECT c.name, o.total_amount\nFROM customers c\nINNER JOIN orders o ON c.id = o.customer_id;\n```\nA customer with zero orders? Not in the result. An order with a deleted customer_id? Not in the result either.\n\n**LEFT JOIN** — every row from the left table, matched data from the right (or `NULL` if no match):\n```sql\nSELECT c.name, o.total_amount\nFROM customers c\nLEFT JOIN orders o ON c.id = o.customer_id;\n```\nThis is how you answer \"which customers have never placed an order?\":\n```sql\nSELECT c.name\nFROM customers c\nLEFT JOIN orders o ON c.id = o.customer_id\nWHERE o.id IS NULL;   -- no matching order row was found\n```\n\n**RIGHT JOIN** — mirror image of LEFT JOIN (rarely used in practice; people just flip the table order and use LEFT JOIN instead — more readable).\n\n**FULL OUTER JOIN** — everything from both sides, matched where possible, `NULL` where not. Useful for reconciliation reports (\"which records exist in system A but not B, or vice versa\").\n\n---\n\n### Self Joins\n\nSometimes a table refers to itself — e.g., an `employees` table with a `manager_id` pointing to another row in the same table:\n\n```sql\nSELECT e.name AS employee, m.name AS manager\nFROM employees e\nLEFT JOIN employees m ON e.manager_id = m.id;\n```\n\nSame table, aliased twice (`e` and `m`) so SQL can tell the two \"copies\" apart.\n\n---\n\n### Worked Example: Three-Table Join for an Order Summary\n\n**Problem:** \"For every order, show the customer's name, the product name, and the quantity ordered.\" Tables: `customers`, `orders`, `order_items` (order_id, product_id, quantity), `products`.\n\n**Step 1 — Start from the \"center\" table.** `order_items` sits between everything — start there.\n\n**Step 2 — Join outward, one relationship at a time.**\n```sql\nSELECT\n  c.name       AS customer_name,\n  p.name       AS product_name,\n  oi.quantity\nFROM order_items oi\nINNER JOIN orders o    ON oi.order_id   = o.id\nINNER JOIN customers c ON o.customer_id = c.id\nINNER JOIN products p  ON oi.product_id = p.id\nORDER BY o.created_at DESC;\n```\n\n**Step 3 — Sanity check row counts.** After joining, always ask: \"did this multiply my rows unexpectedly?\" A common JOIN bug is an accidental one-to-many relationship blowing up your row count — always verify against `COUNT(*)` on the base table before and after."
+    },
+    {
+      "id": "less-sql-5",
+      "title": "Subqueries & CTEs: Thinking in Layers",
+      "order": 5,
+      "estimatedMinutes": 20,
+      "moduleId": "mod-sql-1",
+      "content": "### Subqueries and CTEs: Thinking in Layers\n\nSometimes a single flat query can't express what you need — you need \"a query inside a query.\" That's a subquery. When subqueries get complex, Common Table Expressions (CTEs) keep them readable.\n\n---\n\n### Scalar & IN Subqueries\n\n```sql\n-- Scalar subquery: returns a single value\nSELECT name, price\nFROM products\nWHERE price > (SELECT AVG(price) FROM products);\n\n-- Subquery in an IN clause: returns a list\nSELECT name\nFROM customers\nWHERE id IN (SELECT customer_id FROM orders WHERE total_amount > 500);\n```\n\n---\n\n### Correlated Subqueries\n\nA **correlated** subquery references the outer query's row — it re-runs once per outer row, so use it carefully on large tables:\n\n```sql\nSELECT name, price, category\nFROM products p1\nWHERE price > (\n  SELECT AVG(price) FROM products p2 WHERE p2.category = p1.category\n);\n```\nThis finds products priced above their *own category's* average — the inner query depends on `p1.category` from the outer row.\n\n---\n\n### CTEs: The Readable Alternative\n\nA CTE (`WITH ... AS`) names a temporary result set you can reference like a table — it turns a tangle of nested subqueries into a readable, top-to-bottom narrative:\n\n```sql\nWITH category_averages AS (\n  SELECT category, AVG(price) AS avg_price\n  FROM products\n  GROUP BY category\n)\nSELECT p.name, p.price, ca.avg_price\nFROM products p\nJOIN category_averages ca ON p.category = ca.category\nWHERE p.price > ca.avg_price;\n```\n\nSame result as the correlated subquery above, but most engineers find this dramatically easier to read and debug — and on most modern query engines (Postgres, Snowflake), it performs at least as well.\n\n---\n\n### Worked Example: \"Top Spender Per Country\"\n\n**Problem:** \"For each country, find the single customer who has spent the most in total.\"\n\n**Step 1 — Compute the building block.** Total spend per customer:\n```sql\nWITH customer_totals AS (\n  SELECT c.id, c.name, c.country, SUM(o.total_amount) AS total_spent\n  FROM customers c\n  JOIN orders o ON c.id = o.customer_id\n  GROUP BY c.id, c.name, c.country\n),\n```\n\n**Step 2 — Rank within each country.** Add a ranking CTE using a window function (a sneak peek — full window function coverage is a great next step after this track):\n```sql\nranked AS (\n  SELECT *, RANK() OVER (PARTITION BY country ORDER BY total_spent DESC) AS rnk\n  FROM customer_totals\n)\n```\n\n**Step 3 — Pull just the winners:**\n```sql\nSELECT country, name, total_spent\nFROM ranked\nWHERE rnk = 1;\n```\n\n**Full query:**\n```sql\nWITH customer_totals AS (\n  SELECT c.id, c.name, c.country, SUM(o.total_amount) AS total_spent\n  FROM customers c\n  JOIN orders o ON c.id = o.customer_id\n  GROUP BY c.id, c.name, c.country\n),\nranked AS (\n  SELECT *, RANK() OVER (PARTITION BY country ORDER BY total_spent DESC) AS rnk\n  FROM customer_totals\n)\nSELECT country, name, total_spent\nFROM ranked\nWHERE rnk = 1;\n```\n\nThis exact \"CTE building block, then rank, then filter\" pattern shows up constantly in real analytics work and in SQL interviews."
+    },
+    {
+      "id": "less-sql-6",
+      "title": "INSERT, UPDATE, DELETE & Transactions",
+      "order": 6,
+      "estimatedMinutes": 18,
+      "moduleId": "mod-sql-1",
+      "content": "### Changing Data Safely: INSERT, UPDATE, DELETE & Transactions\n\nReading data is half the job. The other half is changing it — without corrupting it.\n\n---\n\n### INSERT\n\n```sql\nINSERT INTO customers (name, email, country)\nVALUES ('Asha Verma', 'asha@example.com', 'India');\n\n-- Insert multiple rows in one statement\nINSERT INTO customers (name, email, country) VALUES\n  ('Liam Chen', 'liam@example.com', 'Singapore'),\n  ('Maria Silva', 'maria@example.com', 'Brazil');\n```\n\n### UPDATE\n\n```sql\nUPDATE orders\nSET status = 'shipped', shipped_at = NOW()\nWHERE id = 42;\n```\n\n**Danger zone:** run an `UPDATE` (or `DELETE`) without a `WHERE` clause and you just modified *every single row in the table.* This is a real, career-story-worthy incident that has happened to senior engineers at big companies. The habit that saves you: **always write and verify the `SELECT` version of your filter first.**\n\n```sql\n-- Step 1: verify what you're about to touch\nSELECT * FROM orders WHERE status = 'pending' AND created_at < '2026-01-01';\n\n-- Step 2: only once that looks right, convert to UPDATE/DELETE\nUPDATE orders SET status = 'cancelled'\nWHERE status = 'pending' AND created_at < '2026-01-01';\n```\n\n### DELETE\n\n```sql\nDELETE FROM orders WHERE status = 'cancelled' AND created_at < '2020-01-01';\n```\n\n---\n\n### Transactions: Making Multi-Step Changes Atomic\n\nA **transaction** groups multiple statements so they either *all* succeed or *all* fail together — critical whenever one logical action touches more than one table (like an order checkout that both creates an order AND reduces inventory).\n\n```sql\nBEGIN;\n\nUPDATE inventory SET stock = stock - 1 WHERE product_id = 7;\nINSERT INTO orders (customer_id, product_id, total_amount) VALUES (1, 7, 49.99);\n\nCOMMIT;   -- both changes are saved together\n-- or ROLLBACK; to undo everything if something went wrong mid-transaction\n```\n\nThis is the **A** in **ACID** (Atomicity, Consistency, Isolation, Durability) — the four guarantees a proper relational database gives you, and a big part of why SQL databases remain the default choice for anything involving money, inventory, or anything else where \"partially applied\" is not an acceptable state.\n\n---\n\n### Worked Example: Safe Checkout Logic, Step by Step\n\n**Problem:** \"When a customer checks out, deduct stock and create an order — but never let stock go negative.\"\n\n**Step 1 — Check available stock (inside the transaction, so nobody else can change it mid-check):**\n```sql\nBEGIN;\nSELECT stock FROM inventory WHERE product_id = 7 FOR UPDATE; -- locks the row\n```\n\n**Step 2 — In your application code, confirm `stock >= quantity_requested`.**\n\n**Step 3 — If valid, apply both changes:**\n```sql\nUPDATE inventory SET stock = stock - 1 WHERE product_id = 7;\nINSERT INTO orders (customer_id, product_id, total_amount) VALUES (1, 7, 49.99);\nCOMMIT;\n```\n\n**Step 4 — If invalid, `ROLLBACK;` and return a friendly \"out of stock\" error instead.**\n\nThis exact pattern — read-lock, validate in app code, write, commit — is the backbone of nearly every e-commerce checkout system you've ever used."
+    },
+    {
+      "id": "less-sql-7",
+      "title": "Constraints, Keys & Normalization",
+      "order": 7,
+      "estimatedMinutes": 20,
+      "moduleId": "mod-sql-1",
+      "content": "### Constraints, Keys, and Normalization: Designing Data That Can't Lie to You\n\nA good schema makes bad data structurally impossible. This is the difference between \"we caught the bug in a code review\" and \"we caught the bug because the database itself refused to save it.\"\n\n---\n\n### Keys\n\n- **Primary Key (PK):** uniquely identifies each row. Usually an auto-incrementing `id`.\n- **Foreign Key (FK):** a column that references another table's primary key, enforcing that the relationship actually exists.\n\n```sql\nCREATE TABLE orders (\n  id INT PRIMARY KEY,\n  customer_id INT NOT NULL,\n  total_amount DECIMAL(10,2) NOT NULL,\n  FOREIGN KEY (customer_id) REFERENCES customers(id)\n);\n```\n\nNow the database itself will reject an order for a `customer_id` that doesn't exist — no more orphaned records because someone forgot a check in application code.\n\n### Other Constraints\n\n```sql\nCREATE TABLE products (\n  id INT PRIMARY KEY,\n  sku VARCHAR(20) UNIQUE NOT NULL,      -- no two products can share a SKU\n  price DECIMAL(10,2) CHECK (price > 0), -- price can never be zero or negative\n  category VARCHAR(50) NOT NULL DEFAULT 'general'\n);\n```\n\n---\n\n### Normalization: Killing Duplicate Data\n\n**Unnormalized** (bad — repeats customer info on every single order row):\n\n| order_id | customer_name | customer_email | product | amount |\n|---|---|---|---|---|\n| 1 | Asha Verma | asha@x.com | Laptop | 899 |\n| 2 | Asha Verma | asha@x.com | Mouse | 25 |\n\nProblem: change Asha's email, and you must update it in *every row* she appears in — miss one, and now your data contradicts itself.\n\n**Normalized (3NF)** — split into separate tables connected by keys:\n\n`customers`: `id, name, email`\n`orders`: `id, customer_id, product, amount`\n\nNow Asha's email lives in exactly one place. This is the core idea behind the \"Normal Forms\":\n- **1NF:** every column holds a single, atomic value (no comma-separated lists crammed into one field).\n- **2NF:** every non-key column depends on the *whole* primary key (matters for composite keys).\n- **3NF:** every non-key column depends on the key and *nothing but* the key (no column depending on another non-key column).\n\nIn practice, most production schemas target 3NF, then deliberately break it (\"denormalize\") in specific, measured places for read performance — but you should never denormalize *by accident*, only on purpose.\n\n---\n\n### Worked Example: Normalizing a Messy Spreadsheet\n\n**Problem:** You inherit this spreadsheet as a single table:\n`order_id, customer_name, customer_email, product_1, product_2, product_3`\n\n**Step 1 — Spot the 1NF violation.** Three separate \"product\" columns are really a repeating list crammed sideways — classic 1NF violation.\n\n**Step 2 — Fix 1NF.** Create an `order_items` table: one row per product per order (`order_id, product_name`), instead of three fixed columns.\n\n**Step 3 — Spot the 3NF violation.** `customer_email` depends on `customer_name`, not on the `order_id` — it doesn't belong on the orders table at all.\n\n**Step 4 — Fix 3NF.** Pull customer info into its own `customers` table, referenced by `customer_id` on `orders`.\n\n**Result:** three clean tables — `customers`, `orders`, `order_items` — each with a single, unambiguous responsibility. This is precisely the schema shape you'll build in this track's capstone project."
+    },
+    {
+      "id": "less-sql-8",
+      "title": "Indexes & Query Performance (EXPLAIN)",
+      "order": 8,
+      "estimatedMinutes": 20,
+      "moduleId": "mod-sql-1",
+      "content": "### Indexes and Query Performance: Making SQL Fast at Scale\n\nEverything so far has been about *correctness*. This lesson is about *speed* — the difference between a query that returns in 4ms and one that times out at 30 seconds once your table has 50 million rows.\n\n---\n\n### What Is an Index, Really?\n\nWithout an index, the database does a **full table scan** — checking every single row to find matches, like reading a book cover-to-cover to find one sentence. An index is like the book's index page: a separate, sorted structure (almost always a **B-tree**) that lets the database jump straight to matching rows.\n\n```sql\nCREATE INDEX idx_orders_customer_id ON orders(customer_id);\n```\n\nNow `WHERE customer_id = 42` is a fast lookup instead of a full scan.\n\n---\n\n### EXPLAIN: Reading the Database's Mind\n\n```sql\nEXPLAIN ANALYZE\nSELECT * FROM orders WHERE customer_id = 42;\n```\n\nThis shows you the actual **query plan** — whether it used an index (`Index Scan`) or scanned the whole table (`Seq Scan`), how many rows it estimated vs. actually touched, and how long each step took. Reading `EXPLAIN` output is one of the highest-leverage skills you can build as a backend engineer — it turns \"the query is slow\" from a mystery into a diagnosis.\n\n---\n\n### Indexes Aren't Free\n\nEvery index speeds up reads on that column but **slows down writes** — every `INSERT`/`UPDATE`/`DELETE` now has to update the index too. This is a genuine trade-off, not a \"just add more indexes\" situation. Index the columns you filter, join, and sort on frequently; don't index every column \"just in case.\"\n\n**Composite indexes** cover multiple columns, but column *order* matters a lot:\n```sql\nCREATE INDEX idx_orders_customer_status ON orders(customer_id, status);\n```\nThis index efficiently supports `WHERE customer_id = 42` and `WHERE customer_id = 42 AND status = 'shipped'` — but it does **not** efficiently support `WHERE status = 'shipped'` alone, because the index is sorted by `customer_id` first.\n\n---\n\n### Worked Example: Diagnosing and Fixing a Slow Query\n\n**Problem:** \"This dashboard query takes 8 seconds. Fix it.\"\n```sql\nSELECT * FROM orders WHERE status = 'pending' ORDER BY created_at DESC;\n```\n\n**Step 1 — Run `EXPLAIN ANALYZE`.** Output shows `Seq Scan on orders` — a full table scan across all 3 million rows.\n\n**Step 2 — Identify the filter and sort columns.** `status` (filter) and `created_at` (sort).\n\n**Step 3 — Add a composite index matching that access pattern:**\n```sql\nCREATE INDEX idx_orders_status_created ON orders(status, created_at DESC);\n```\n\n**Step 4 — Re-run `EXPLAIN ANALYZE`.** Now shows `Index Scan using idx_orders_status_created` — plan cost drops dramatically, and the query returns in milliseconds.\n\n**Step 5 — Watch your write path.** Since `orders` gets a lot of `INSERT`s, confirm this new index isn't slowing down checkout throughput beyond an acceptable margin — every index is a trade-off, and a good engineer always checks both sides of that trade before shipping it."
+    },
+    {
+      "id": "less-sql-worked-1",
+      "title": "Deep Dive: Building an Analytics Query Step by Step",
+      "order": 1,
+      "estimatedMinutes": 25,
+      "moduleId": "mod-sql-2",
+      "content": "### Deep Dive: Building a Full Analytics Query From Scratch\n\nLet's build a real analytics query the way it actually happens on the job: starting from a vague business question and ending at production-ready SQL, one deliberate step at a time.\n\n---\n\n### The Business Question\n\n> \"Which customers have spent more than $500 total, and what was their most recent order date? Show me the top 10 by total spend.\"\n\nThis is intentionally vague — real requests always are. Your job is to translate it.\n\n---\n\n### Step 1: Identify the Tables and the Relationship\n\nWe need `customers` (id, name) and `orders` (id, customer_id, total_amount, created_at). Relationship: one customer → many orders, so we'll `JOIN` and `GROUP BY` the customer.\n\n### Step 2: Draft the Join\n\n```sql\nSELECT c.id, c.name, o.total_amount, o.created_at\nFROM customers c\nJOIN orders o ON c.id = o.customer_id;\n```\n\nAt this stage, run it and eyeball the raw joined rows — this is a habit senior engineers never skip. Confirm the join didn't accidentally duplicate rows (check row count against `SELECT COUNT(*) FROM orders`).\n\n### Step 3: Add the Aggregation\n\nWe need a *total* spend and the *most recent* order date per customer:\n\n```sql\nSELECT\n  c.id,\n  c.name,\n  SUM(o.total_amount) AS total_spent,\n  MAX(o.created_at)   AS last_order_date\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nGROUP BY c.id, c.name;\n```\n\n### Step 4: Apply the \"More Than $500\" Filter\n\nThis is a filter on an *aggregated* value, so it's `HAVING`, not `WHERE`:\n\n```sql\nSELECT\n  c.id,\n  c.name,\n  SUM(o.total_amount) AS total_spent,\n  MAX(o.created_at)   AS last_order_date\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nGROUP BY c.id, c.name\nHAVING SUM(o.total_amount) > 500;\n```\n\n### Step 5: Sort and Limit to \"Top 10\"\n\n```sql\nSELECT\n  c.id,\n  c.name,\n  SUM(o.total_amount) AS total_spent,\n  MAX(o.created_at)   AS last_order_date\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nGROUP BY c.id, c.name\nHAVING SUM(o.total_amount) > 500\nORDER BY total_spent DESC\nLIMIT 10;\n```\n\n### Step 6: The Production Checklist\n\nBefore this query ships in a dashboard or API, a careful engineer asks:\n1. **Does `JOIN` vs. `LEFT JOIN` matter here?** A customer with zero orders is correctly excluded by our inner `JOIN` — that's actually what we want, since they can't have spent >$500.\n2. **Is there an index to support this?** `orders(customer_id)` should already be indexed as a foreign key — confirm with `EXPLAIN ANALYZE`.\n3. **What happens with `NULL` amounts?** `SUM()` ignores `NULL`s silently — verify that's the intended behavior, or coalesce with `COALESCE(o.total_amount, 0)`.\n4. **Is the result deterministic?** Ties in `total_spent DESC` could return different rows on different runs — add a tiebreaker like `, c.id ASC` if the \"top 10\" needs to be stable.\n\nThat's the real workflow: draft → verify → aggregate → filter → sort/limit → production checklist. Every complex query you'll ever write is this same loop, just with more steps."
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-prac-1",
+      "type": "practice",
+      "title": "Practice: Build a Todo REST API with Joi Validation",
+      "description": "Implement a comprehensive Express.js REST API with full CRUD endpoints for a Todo manager, but incorporate proper schema validation using Joi or schema assertions. This ensures no malformed objects enter your systems.",
+      "requirements": [
+        "Initialize an Express server on Port 3000.",
+        "Implement GET /todos, GET /todos/:id, POST /todos, PUT /todos/:id, and DELETE /todos/:id.",
+        "Use an array-based or JSON-file-based persistent database layer.",
+        "Implement input body validation: Title is required (min 3 chars), completed must be a boolean (defaults to false), priority must be one of [low, medium, high].",
+        "Return structured 400 Bad Request error if validation fails, displaying detail on which parameters are invalid."
+      ],
+      "rubric": [
+        "Endpoint compliance: All 5 CRUD methods work correctly.",
+        "Validation strength: POSTing a todo without a title or with invalid priority is safely blocked and returns 400.",
+        "Error Resilience: Malformed JSON bodies are caught by error handling middleware and do not crash the server.",
+        "Code formatting: Code is well-commented and organized."
+      ],
+      "rewardPoints": 150,
+      "rewardMoney": 0,
+      "trackId": "track-backend-1",
+      "moduleId": "mod-3"
+    },
+    {
+      "id": "proj-prac-2",
+      "type": "practice",
+      "title": "Practice: Add Pagination, Search, and Filtering",
+      "description": "Extend an existing API route to handle pagination query parameters (?page=1&limit=10), search keywords (?search=query), and filter fields (?status=completed). In professional servers, we never return entire tables at once—we paginated queries.",
+      "requirements": [
+        "Implement an endpoint GET /api/items which handles mock item lists (seed at least 25 items).",
+        "Add search capabilities filtering by item titles matching user query (?q=keyword).",
+        "Add pagination handling: query parameters `page` (default 1) and `limit` (default 5).",
+        "In the response metadata, include pagination metrics: `page`, `limit`, `totalItems`, and `totalPages`.",
+        "Handle negative or non-integer parameter values safely by defaulting to standard values."
+      ],
+      "rubric": [
+        "Search compliance: Querying /api/items?q=apple accurately filters results.",
+        "Pagination metrics: Response metadata matches actual output arrays perfectly.",
+        "Safety bounds: Requests for page -5 or limit 9999 are safely coerced to standard safety limits (e.g. limit max 100).",
+        "Clean Express handler structure."
+      ],
+      "rewardPoints": 150,
+      "rewardMoney": 0,
+      "trackId": "track-backend-1",
+      "moduleId": "mod-3"
+    },
+    {
+      "id": "proj-cap-1",
+      "type": "capstone",
+      "title": "Capstone: Production-Style E-Commerce REST API Backend",
+      "description": "This is your centerpiece. You are building the complete core engine for a modern E-Commerce backend service. This project requires implementing secure JSON Web Token authentication, product inventory management, a multi-item persistent shopping cart, checkout order placement, detailed validation schemas, modular controllers, and structured custom error classes.",
+      "requirements": [
+        "User Auth system: Register, Login, and a protected GET /api/users/me endpoint. Issue secure JWTs and authenticate them using a custom `requireAuth` middleware.",
+        "Products Catalog (GET /products, GET /products/:id). Only Admins can execute CRUD (POST, PUT, DELETE) on products.",
+        "Shopping Cart system (POST /cart/items adds an item, GET /cart gets the cart, DELETE /cart/items/:id removes item). Carts are user-specific and persistent.",
+        "Order checkout system (POST /orders/checkout takes current cart items, checks product inventory stock, reduces inventory, computes total price, clears cart, and creates a pending Order record).",
+        "Structured modular organization: controllers/, routes/, middlewares/, utils/.",
+        "Advanced error Handling: Use a global error handling middleware, throwing custom error classes (e.g. NotFoundError, BadRequestError, UnauthorizedError) to return standardized errors.",
+        "Extensive README.md outlining setup instructions, architecture decisions, database models, and sample cURL requests."
+      ],
+      "rubric": [
+        "Security: API endpoints for profile, cart, and checkout are strictly protected by JWT verification.",
+        "Admin Boundaries: Trying to create/update products with a student JWT is safely blocked with 403 Forbidden.",
+        "Inventory Integrity: Checking out a quantity larger than product stock throws a 400 Bad Request and rolls back cart transactions.",
+        "Architecture quality: Modular file division, no inline DB setups, robust try-catch wrappers, and standard logging.",
+        "Documentation: High-quality README.md outlining exact setup commands and complete API specifications."
+      ],
+      "rewardPoints": 500,
+      "rewardMoney": 100,
+      "trackId": "track-backend-1",
+      "moduleId": "mod-4"
+    },
+    {
+      "id": "proj-sql-prac-1",
+      "type": "practice",
+      "title": "Practice: Library Management System Queries",
+      "description": "You're given a schema with `books`, `members`, and `loans` tables. Write a set of queries that answer real librarian questions — from simple lookups to multi-table joins and aggregations.",
+      "requirements": [
+        "Design/seed three tables: books(id, title, author, genre), members(id, name, joined_at), loans(id, book_id, member_id, borrowed_at, returned_at).",
+        "Write a query to list all books currently on loan (returned_at IS NULL), joined with the borrowing member's name.",
+        "Write a query showing the number of books borrowed per genre, sorted highest to lowest.",
+        "Write a query to find members who have never borrowed a book (use a LEFT JOIN).",
+        "Write a query to find the single most-borrowed book of all time.",
+        "Write a query using a CTE to find members who borrowed more than 5 books in the last 30 days."
+      ],
+      "rubric": [
+        "Schema correctness: proper primary/foreign keys defined between all three tables.",
+        "Join correctness: correct use of INNER vs LEFT JOIN depending on the question asked.",
+        "Aggregation correctness: GROUP BY / HAVING used appropriately, no ungrouped column errors.",
+        "Readability: at least one query uses a CTE instead of a nested subquery for clarity.",
+        "All 5 required queries return correct, sensible results against seed data."
+      ],
+      "rewardPoints": 150,
+      "rewardMoney": 0,
+      "trackId": "track-sql-1",
+      "moduleId": "mod-sql-3"
+    },
+    {
+      "id": "proj-sql-prac-2",
+      "type": "practice",
+      "title": "Practice: E-Commerce Sales Reporting with Joins & Aggregations",
+      "description": "Build a small reporting suite against an e-commerce schema (customers, products, orders, order_items). This mirrors real analytics/BI tickets you'll get asked to build as a backend or data engineer.",
+      "requirements": [
+        "Seed at least 20 customers, 15 products, and 50+ orders with varying dates and statuses.",
+        "Write a query for monthly revenue totals (only 'completed' orders), grouped by month.",
+        "Write a query for the top 5 best-selling products by total quantity sold, using order_items.",
+        "Write a query showing each customer's total lifetime spend and their most recent order date, using a JOIN + GROUP BY.",
+        "Write a query using EXPLAIN ANALYZE on your top-5-products query, then add an index to improve its plan if it's doing a sequential scan.",
+        "Document, in a short README, what index you added and what changed in the query plan before/after."
+      ],
+      "rubric": [
+        "Correctness: all reporting queries return accurate aggregated numbers matching the seed data.",
+        "Join integrity: no row duplication bugs introduced by one-to-many joins (verify counts).",
+        "Performance awareness: EXPLAIN ANALYZE output captured before and after indexing, with a clear before/after comparison.",
+        "Query readability: consistent aliasing, meaningful column names via AS, well-formatted SQL.",
+        "README quality: clearly explains the indexing decision and its measured impact."
+      ],
+      "rewardPoints": 150,
+      "rewardMoney": 0,
+      "trackId": "track-sql-1",
+      "moduleId": "mod-sql-3"
+    },
+    {
+      "id": "proj-sql-cap-1",
+      "type": "capstone",
+      "title": "Capstone: Design & Query a Production-Style E-Commerce Database",
+      "description": "This is your centerpiece for the SQL track: design a properly normalized multi-table relational schema from scratch, then write the full set of queries a real backend service would need to power it — from checkout logic to admin analytics dashboards.",
+      "requirements": [
+        "Design a normalized (3NF) schema with at minimum: customers, products, categories, orders, order_items, and inventory tables, with correct primary/foreign keys and constraints (NOT NULL, UNIQUE, CHECK where appropriate).",
+        "Write a transactional checkout query sequence: verify stock, deduct inventory, insert an order + order_items, all wrapped in BEGIN/COMMIT with a ROLLBACK path for insufficient stock.",
+        "Write an admin analytics query set: monthly revenue trend, top 10 products by revenue, and customers with no orders in the last 90 days (churn risk).",
+        "Add at least 3 indexes justified by real query patterns you wrote above, with EXPLAIN ANALYZE output showing the plan before and after each index.",
+        "Write at least one query using a CTE and window function together (e.g. ranking top product per category).",
+        "Extensive README.md documenting the ER structure (tables + relationships), normalization decisions, and sample query outputs."
+      ],
+      "rubric": [
+        "Schema quality: correctly normalized to 3NF, with sensible constraints preventing invalid data at the DB level.",
+        "Transaction correctness: checkout logic is atomic — a simulated failure mid-transaction leaves no partial state.",
+        "Query correctness: all analytics queries produce accurate results against seed data, with correct JOIN types chosen per question.",
+        "Performance rigor: each index is backed by measured EXPLAIN ANALYZE before/after evidence, not guesswork.",
+        "Documentation: README clearly explains schema design reasoning to someone who has never seen it before."
+      ],
+      "rewardPoints": 500,
+      "rewardMoney": 100,
+      "trackId": "track-sql-1",
+      "moduleId": "mod-sql-4"
+    }
+  ]
+}

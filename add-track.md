@@ -1,164 +1,145 @@
-# Adding a New Track to SkillBridge
+# Adding Curriculum Content to SkillBridge
 
-This guide walks any developer (including non-experts) step-by-step to add a new curriculum *track* to SkillBridge. A track groups modules, lessons, and projects (e.g. "Fundamentals", "Worked Examples", "Projects"). Follow these steps carefully.
+SkillBridge now uses a content-as-code pipeline. Curriculum is authored in `content/`, validated by `npm run content:build`, and compiled into `backend/content/compiled.json` for the app to read.
 
-Prerequisites
-- Node.js + npm installed
-- Project checked out and dependencies installed (`npm install`)
-- Basic familiarity with the repo layout
+Do not add tracks, modules, lessons, or projects directly to `db.json`. That file is for user/runtime data only: users, password hashes, progress, submissions, claims, and notification markers.
 
-Repo areas you'll touch
-- Backend local DB: `db.json` (seed data used for local dev)
-- Backend server modules: `backend/modules/*` (curriculum code)
-- Server DB helpers: `backend/server/supabase.ts` and `backend/server/db.ts`
-- Frontend curriculum: `frontend/src` (components read curriculum from API)
+## Folder Shape
 
-Overview: Steps you'll perform
-1. Add the track to `db.json` local data
-2. Add associated modules, lessons and projects in `db.json` under the new track
-3. (Optional) If using Supabase: run the SQL schema and seed Supabase, then insert the new track rows in Supabase
-4. Run the server and verify the new track is visible in the UI
-5. Add any new assets, icons, or copy changes
+Each track gets a folder under `content/`:
 
-Detailed step-by-step
+```text
+content/
+|-- backend/
+|   |-- track.yaml
+|   |-- 01-node-js-express-fundamentals/
+|   |   |-- module.yaml
+|   |   |-- 01-what-is-node-js.md
+|   |   `-- ...
+|   `-- 03-practice-projects/
+|       |-- module.yaml
+|       `-- practice-proj-prac-1.yaml
+`-- sql/
+    |-- track.yaml
+    `-- ...
+```
 
-1) Open `db.json` and find the `tracks` array
-- File: `db.json`
-- Add a new track object with these required fields:
-  - `id`: a unique string (use kebab-case, e.g. `fundamentals`)
-  - `name`: display name (e.g. `Fundamentals`)
-  - `description`: short description
-  - `icon`: (optional) icon name or URL
+Use numeric prefixes on module and lesson filenames so file order matches display order.
 
-Example track object (add this to the `tracks` array):
+## Track File
 
-{
-  "id": "fundamentals",
-  "name": "Fundamentals",
-  "description": "Core concepts and exercises to build a strong foundation.",
-  "icon": "book"
-}
+Create `track.yaml` in the track folder:
 
-2) Add Modules that belong to the track
-- Find `modules` array in `db.json`. Each module needs:
-  - `id` (unique), `trackId` (must equal your track `id`), `title`, `order` (number)
-- Add modules in the order you want them shown. Example:
+```yaml
+id: track-aws-1
+name: AWS Cloud Foundations
+description: Learn cloud fundamentals, IAM, compute, storage, networking, and deployment workflows.
+icon: Layers
+```
 
-{
-  "id": "fundamentals-1",
-  "trackId": "fundamentals",
-  "title": "Intro to Concepts",
-  "order": 1
-}
+## Module File
 
-3) Add Lessons for each module
-- Find `lessons` array in `db.json`. Each lesson needs:
-  - `id`, `moduleId`, `title`, `order`, `estimatedMinutes`, `content`
-- `content` can be plain text or HTML/Markdown depending on how the renderer expects it. Example:
+Create `module.yaml` in each module folder:
 
-{
-  "id": "fundamentals-1-lesson-1",
-  "moduleId": "fundamentals-1",
-  "title": "What is X?",
-  "order": 1,
-  "estimatedMinutes": 15,
-  "content": "Introductory text for this lesson..."
-}
+```yaml
+id: mod-aws-1
+title: Cloud Fundamentals
+order: 1
+```
 
-4) Add Projects if the track includes practice work
-- In `db.json`'s `projects` array add entries with:
-  - `id`, `trackId`, `moduleId`, `type` ("practice" or "capstone"), `title`, `description`, `requirements`, `rubric`, `rewardPoints`, `rewardMoney`
+`trackId` is inferred from the parent track folder, so do not add it here.
 
-Example project:
+## Lesson File
 
-{
-  "id": "fundamentals-project-1",
-  "trackId": "fundamentals",
-  "moduleId": "fundamentals-1",
-  "type": "practice",
-  "title": "Build a Hello App",
-  "description": "Create a minimal app demonstrating core concepts.",
-  "requirements": ["Repo URL", "Short writeup"],
-  "rubric": ["Completeness", "Code quality"],
-  "rewardPoints": 50,
-  "rewardMoney": 0
-}
+Lessons are Markdown files with YAML frontmatter:
 
-5) (Optional) If you use Supabase in your environment
-- Ensure your Supabase project has the SkillBridge tables. If you see errors like `PGRST205` (table not found), run the SQL schema from `backend/server/supabase.ts` or copy the output the server prints on startup.
-- To manually add the new track to Supabase:
-  - Open Supabase -> SQL Editor -> Run an `INSERT INTO skillbridge_tracks (id, name, description, icon) VALUES (...)` statement with your track values.
-- Similarly insert modules, lessons, and projects into their corresponding tables (`skillbridge_modules`, `skillbridge_lessons`, `skillbridge_projects`).
+```markdown
+---
+id: less-aws-1
+title: What Is Cloud Computing?
+order: 1
+estimatedMinutes: 15
+---
 
-6) Start the dev server and verify
-- Run:
+### Why Cloud Changed Infrastructure
+
+Write the lesson body in normal Markdown.
+```
+
+`content` is inferred from the Markdown body.
+
+## Project File
+
+Projects are YAML files:
+
+```yaml
+id: proj-aws-prac-1
+type: practice
+title: "Practice: Deploy a Static Site"
+description: Deploy a static site using object storage and public hosting.
+requirements:
+  - Create a public static hosting bucket.
+  - Upload an HTML/CSS site.
+  - Document the deployment steps.
+rubric:
+  - Hosting works from a public URL.
+  - Permissions are scoped intentionally.
+  - README clearly explains the deployment.
+rewardPoints: 150
+rewardMoney: 0
+```
+
+## Validate and Compile
+
+After adding or editing content, run:
 
 ```bash
-npm run dev
+npm run content:build
 ```
 
-- Open the app in the browser (usually `http://localhost:3000`).
-- Visit the curriculum view or dashboard to confirm the new track appears and modules/lessons load.
+This validates every YAML/frontmatter file and writes `backend/content/compiled.json`.
 
-7) Update frontend content (if you want custom ordering or display)
-- The frontend reads curriculum via the API; if you need specific display tweaks, update `frontend/src/components/CurriculumView.tsx` or related component.
-- Add icons or static assets into `assets/` and reference them in the `icon` field.
+Then run the normal checks:
 
-8) Adding more "Fundamentals", "Worked Examples" or "Projects" sub-items
-- Repeat steps 2-4 to add more modules, lessons, and projects. Use consistent IDs and increasing `order` values.
-
-9) Recommended workflow for contributors
-- Make changes in a feature branch.
-- Run the dev server locally and verify behavior.
-- Add a short entry in `metadata.json` or `README.md` describing the new track (optional but helpful).
-- Create a PR describing what was added and include sample screenshots or the route to view it.
-
-Troubleshooting
-- If the UI doesn't show changes: restart the server and clear the browser cache.
-- If Supabase returns `PGRST205`: the tables are missing in your Supabase project. Run the SQL schema from `getSupabaseSQLSchema()` in `backend/server/supabase.ts` (server prints it when the error occurs).
-- If lessons show malformed content: ensure the `content` format matches `frontend/src/MarkdownRenderer.tsx` expectations (Markdown vs HTML).
-
-Appendix: Quick SQL INSERT examples (Supabase)
-
-INSERT a track:
-
-```sql
-INSERT INTO skillbridge_tracks (id, name, description, icon) VALUES (
-  'fundamentals', 'Fundamentals', 'Core concepts and exercises', 'book'
-);
+```bash
+npm run lint
+npm run build
 ```
 
-INSERT a module:
+## Supabase Sync
 
-```sql
-INSERT INTO skillbridge_modules (id, track_id, title, "order") VALUES (
-  'fundamentals-1', 'fundamentals', 'Intro to Concepts', 1
-);
+If the environment uses Supabase content tables, compile first and then sync:
+
+```bash
+npm run content:build
+npm run content:sync
 ```
 
-INSERT a lesson:
+`content:sync` requires:
 
-```sql
-INSERT INTO skillbridge_lessons (id, module_id, title, "order", estimated_minutes, content) VALUES (
-  'fundamentals-1-lesson-1', 'fundamentals-1', 'What is X?', 1, 15, 'Introductory text for this lesson...'
-);
+```text
+SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
 ```
 
-Notes
-- Keep IDs stable: changing IDs later will orphan related rows and user progress.
-- When adding new content that affects UX, include screenshots in your PR and ask a reviewer to sanity-check ordering and copy.
+The service-role key is server-only. Never expose it to frontend code or commit a real value.
 
-If you'd like, I can:
-- Add a script that programmatically inserts new track rows into Supabase from `db.json`.
-- Create a minimal PR template for content additions.
+## Migrating Old db.json Content
 
-"Done" checklist (for maintainers)
-- [ ] Added track object in `db.json`
-- [ ] Added modules in `db.json`
-- [ ] Added lessons in `db.json`
-- [ ] Added projects (if applicable) in `db.json`
-- [ ] Verified in UI locally
-- [ ] Inserted rows into Supabase (if using a remote DB)
+The one-time migration script converts legacy `db.json` curriculum arrays into `content/` files:
 
----
-Generated by the project assistant. If you want the guide modified (more screenshots, stricter conventions, or a form to add tracks), tell me the preferred format.
+```bash
+npm run content:migrate
+npm run content:build
+npm run content:strip-db
+```
+
+Only run this when migrating old authored curriculum out of `db.json`.
+
+## Contributor Checklist
+
+- Add or update files under `content/`.
+- Keep IDs stable; changing IDs can orphan user progress or submissions.
+- Run `npm run content:build`.
+- Run `npm run lint` and `npm run build`.
+- Open a PR so lesson/project changes can be reviewed like code.

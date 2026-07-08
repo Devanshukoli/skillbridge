@@ -330,23 +330,28 @@ export async function supabaseUpdateUserProfile(
 }
 
 // Seed helper for Supabase (if database tables exist and are empty)
-export async function seedSupabaseIfNeeded(localDb: any) {
+export async function seedSupabaseIfNeeded(content: {
+  tracks: Track[];
+  modules: Module[];
+  lessons: Lesson[];
+  projects: Project[];
+}) {
   const supabase = getSupabaseClient();
   if (!supabase) return;
 
   try {
     // 1. Seed Tracks if empty
     const { count: trackCount } = await supabase.from('skillbridge_tracks').select('*', { count: 'exact', head: true });
-    if (trackCount === 0 && localDb.tracks.length > 0) {
+    if (trackCount === 0 && content.tracks.length > 0) {
       console.log('[Supabase] Seeding Tracks...');
-      await supabase.from('skillbridge_tracks').insert(localDb.tracks);
+      await supabase.from('skillbridge_tracks').insert(content.tracks);
     }
 
     // 2. Seed Modules if empty
     const { count: modCount } = await supabase.from('skillbridge_modules').select('*', { count: 'exact', head: true });
-    if (modCount === 0 && localDb.modules.length > 0) {
+    if (modCount === 0 && content.modules.length > 0) {
       console.log('[Supabase] Seeding Modules...');
-      await supabase.from('skillbridge_modules').insert(localDb.modules.map((m: any) => ({
+      await supabase.from('skillbridge_modules').insert(content.modules.map((m) => ({
         id: m.id,
         track_id: m.trackId,
         title: m.title,
@@ -356,9 +361,9 @@ export async function seedSupabaseIfNeeded(localDb: any) {
 
     // 3. Seed Lessons if empty
     const { count: lessCount } = await supabase.from('skillbridge_lessons').select('*', { count: 'exact', head: true });
-    if (lessCount === 0 && localDb.lessons.length > 0) {
+    if (lessCount === 0 && content.lessons.length > 0) {
       console.log('[Supabase] Seeding Lessons...');
-      await supabase.from('skillbridge_lessons').insert(localDb.lessons.map((l: any) => ({
+      await supabase.from('skillbridge_lessons').insert(content.lessons.map((l) => ({
         id: l.id,
         module_id: l.moduleId,
         title: l.title,
@@ -370,9 +375,9 @@ export async function seedSupabaseIfNeeded(localDb: any) {
 
     // 4. Seed Projects if empty
     const { count: projCount } = await supabase.from('skillbridge_projects').select('*', { count: 'exact', head: true });
-    if (projCount === 0 && localDb.projects.length > 0) {
+    if (projCount === 0 && content.projects.length > 0) {
       console.log('[Supabase] Seeding Projects...');
-      await supabase.from('skillbridge_projects').insert(localDb.projects.map((p: any) => ({
+      await supabase.from('skillbridge_projects').insert(content.projects.map((p) => ({
         id: p.id,
         track_id: p.trackId,
         module_id: p.moduleId,

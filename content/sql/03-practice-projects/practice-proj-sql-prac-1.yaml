@@ -1,0 +1,25 @@
+id: proj-sql-prac-1
+type: practice
+title: 'Practice: Library Management System Queries'
+description: >-
+  You're given a schema with `books`, `members`, and `loans` tables. Write a set of queries that
+  answer real librarian questions — from simple lookups to multi-table joins and aggregations.
+requirements:
+  - >-
+    Design/seed three tables: books(id, title, author, genre), members(id, name, joined_at),
+    loans(id, book_id, member_id, borrowed_at, returned_at).
+  - >-
+    Write a query to list all books currently on loan (returned_at IS NULL), joined with the
+    borrowing member's name.
+  - Write a query showing the number of books borrowed per genre, sorted highest to lowest.
+  - Write a query to find members who have never borrowed a book (use a LEFT JOIN).
+  - Write a query to find the single most-borrowed book of all time.
+  - Write a query using a CTE to find members who borrowed more than 5 books in the last 30 days.
+rubric:
+  - 'Schema correctness: proper primary/foreign keys defined between all three tables.'
+  - 'Join correctness: correct use of INNER vs LEFT JOIN depending on the question asked.'
+  - 'Aggregation correctness: GROUP BY / HAVING used appropriately, no ungrouped column errors.'
+  - 'Readability: at least one query uses a CTE instead of a nested subquery for clarity.'
+  - All 5 required queries return correct, sensible results against seed data.
+rewardPoints: 150
+rewardMoney: 0

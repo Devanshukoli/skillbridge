@@ -1,0 +1,30 @@
+id: proj-sql-prac-2
+type: practice
+title: 'Practice: E-Commerce Sales Reporting with Joins & Aggregations'
+description: >-
+  Build a small reporting suite against an e-commerce schema (customers, products, orders,
+  order_items). This mirrors real analytics/BI tickets you'll get asked to build as a backend or
+  data engineer.
+requirements:
+  - Seed at least 20 customers, 15 products, and 50+ orders with varying dates and statuses.
+  - Write a query for monthly revenue totals (only 'completed' orders), grouped by month.
+  - Write a query for the top 5 best-selling products by total quantity sold, using order_items.
+  - >-
+    Write a query showing each customer's total lifetime spend and their most recent order date,
+    using a JOIN + GROUP BY.
+  - >-
+    Write a query using EXPLAIN ANALYZE on your top-5-products query, then add an index to improve
+    its plan if it's doing a sequential scan.
+  - >-
+    Document, in a short README, what index you added and what changed in the query plan
+    before/after.
+rubric:
+  - 'Correctness: all reporting queries return accurate aggregated numbers matching the seed data.'
+  - 'Join integrity: no row duplication bugs introduced by one-to-many joins (verify counts).'
+  - >-
+    Performance awareness: EXPLAIN ANALYZE output captured before and after indexing, with a clear
+    before/after comparison.
+  - 'Query readability: consistent aliasing, meaningful column names via AS, well-formatted SQL.'
+  - 'README quality: clearly explains the indexing decision and its measured impact.'
+rewardPoints: 150
+rewardMoney: 0

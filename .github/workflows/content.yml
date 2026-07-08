@@ -1,0 +1,48 @@
+name: Content Validation & Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'content/**'
+      - 'backend/content/schema.ts'
+      - 'scripts/build-content.ts'
+      - 'scripts/sync-supabase-content.ts'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    paths:
+      - 'content/**'
+      - 'backend/content/schema.ts'
+      - 'scripts/build-content.ts'
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run content:build
+
+  sync:
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run content:build
+      - run: npm run content:sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

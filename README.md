@@ -7,6 +7,7 @@ The project runs as one Node.js app:
 - React frontend in `frontend/`
 - Express backend in `backend/`
 - Local JSON database fallback in `db.json`
+- Version-controlled curriculum content in `content/`
 - Optional Supabase persistence when Supabase environment variables are configured
 
 ## Prerequisites
@@ -43,7 +44,7 @@ npm run dev
 http://localhost:3000
 ```
 
-That is enough for local development. The app uses `db.json` automatically when Supabase is not configured.
+That is enough for local development. The app reads compiled curriculum from `backend/content/compiled.json` and uses `db.json` automatically for local user/runtime data when Supabase is not configured.
 
 ## Default Local Accounts
 
@@ -77,6 +78,7 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 DISABLE_HMR=true
 ```
 
@@ -85,6 +87,7 @@ Notes:
 - `JWT_SECRET` signs login cookies. If omitted, the app uses a development fallback secret.
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` enable Google Sign-In.
 - `SUPABASE_URL` and `SUPABASE_ANON_KEY` switch persistence from `db.json` to Supabase.
+- `SUPABASE_SERVICE_ROLE_KEY` is only needed for `npm run content:sync`. Keep it server-side.
 - `DISABLE_HMR=true` disables Vite hot module reload and file watching for environments where file watching causes problems.
 - Keep real secrets out of committed files.
 
@@ -134,6 +137,30 @@ npm run lint
 Runs the TypeScript compiler in check-only mode.
 
 ```bash
+npm run content:build
+```
+
+Validates files under `content/` and writes `backend/content/compiled.json`.
+
+```bash
+npm run content:sync
+```
+
+Upserts compiled curriculum content into Supabase. Requires `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+
+```bash
+npm run content:migrate
+```
+
+One-time helper that converts old `db.json` curriculum arrays into `content/` files.
+
+```bash
+npm run content:strip-db
+```
+
+Removes authored curriculum arrays from `db.json` after migration while keeping user/runtime data.
+
+```bash
 npm run clean
 ```
 
@@ -143,6 +170,9 @@ Removes build output. This script uses `rm -rf`, so it works best in Git Bash, W
 
 ```text
 .
+|-- content/
+|   |-- backend/
+|   `-- sql/
 |-- frontend/
 |   |-- index.html
 |   `-- src/
@@ -176,17 +206,31 @@ The Express server:
 
 1. Registers JSON parsing middleware.
 2. Mounts API routes under `/api`.
-3. Seeds local data in `db.json` when needed.
+3. Seeds local user accounts in `db.json` when needed.
 4. Uses Supabase if Supabase variables are configured.
 5. Serves the React app through Vite middleware.
 
 In production, `npm run build` creates `dist/`, and `npm start` serves the built frontend plus the bundled backend.
 
+## Curriculum Content
+
+Curriculum tracks, modules, lessons, and projects are authored as files in `content/`.
+
+After editing content, run:
+
+```bash
+npm run content:build
+```
+
+The compiler validates YAML/frontmatter and writes `backend/content/compiled.json`, which the backend reads at runtime.
+
+For the detailed content authoring workflow, see `add-track.md`.
+
 ## Local Data
 
 The local database is `db.json`.
 
-It stores users, password hashes, curriculum, submissions, progress, and claims. The app updates this file as you use the local version.
+It stores users, password hashes, submissions, progress, claims, and track notification markers. The app updates this file as you use the local version.
 
 If you want a fresh local seed, stop the server, back up or remove `db.json`, then run `npm run dev` again.
 

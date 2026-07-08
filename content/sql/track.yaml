@@ -1,0 +1,6 @@
+id: track-sql-1
+name: SQL & Relational Databases
+description: >-
+  Go from writing your first SELECT to designing and optimizing production-grade relational schemas.
+  Covers querying, joins, subqueries, transactions, normalization, and indexing/performance.
+icon: Database
