@@ -242,7 +242,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
+                className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${
                   isActive
                     ? 'bg-blue-50 text-blue-700 font-bold'
                     : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
@@ -293,7 +293,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                             key={avatar.id}
                             type="button"
                             onClick={() => setAvatarId(avatar.id)}
-                            className={`relative w-16 h-16 rounded-2xl overflow-hidden border-2 transition-all ${
+                            className={`relative w-16 h-16 rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${
                               isSelected ? 'border-blue-600 ring-4 ring-blue-100' : 'border-slate-200 hover:border-slate-300'
                             }`}
                             title={avatar.label}
@@ -383,7 +383,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                           <button
                             type="button"
                             onClick={() => handleRemoveSkill(skill)}
-                            className="text-slate-400 hover:text-slate-700 p-0.5 rounded-md hover:bg-blue-100 transition-colors"
+                            className="text-slate-400 hover:text-slate-700 p-0.5 rounded-md hover:bg-blue-100 transition-colors cursor-pointer"
                             title={`Remove ${skill}`}
                           >
                             <X className="w-3 h-3" />
@@ -406,13 +406,13 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                             handleAddSkill();
                           }
                         }}
-                        placeholder="Postgres"
+                        placeholder="e.g. Postgres"
                         className="flex-1 min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm"
                       />
                       <button
                         type="button"
                         onClick={handleAddSkill}
-                        className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 rounded-xl transition-all"
+                        className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 rounded-xl transition-all cursor-pointer"
                         title="Add skill"
                       >
                         <Plus className="w-4 h-4" />
@@ -444,7 +444,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                         key={option.value}
                         type="button"
                         onClick={() => setAppearance(option.value)}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${
                           isSelected
                             ? 'border-blue-500 bg-blue-50 text-blue-700'
                             : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-white hover:border-slate-300'
@@ -463,7 +463,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                   id="settings-save-btn"
                   type="submit"
                   disabled={loading}
-                  className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10"
+                  className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
                   <span>{loading ? 'Saving...' : 'Save Settings'}</span>
@@ -553,7 +553,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                   <button
                     type="submit"
                     disabled={passwordLoading}
-                    className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10"
+                    className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
                   >
                     <Lock className="w-4 h-4" />
                     <span>{passwordLoading ? 'Updating...' : 'Update Password'}</span>
@@ -580,7 +580,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10"
+                  className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
                   <span>{loading ? 'Saving...' : 'Save Privacy'}</span>
@@ -610,7 +610,7 @@ function LinkInput({ id, label, icon: Icon, value, placeholder, onChange }: Link
         {label}
       </label>
       <div className="relative">
-        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
         <input
           id={id}
           type="url"
@@ -644,7 +644,7 @@ function SelectField({ id, label, icon: Icon, value, options, onChange }: Select
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm"
+        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm cursor-pointer"
       >
         {options.map((option) => (
           <option key={option} value={option}>

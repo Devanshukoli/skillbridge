@@ -173,7 +173,7 @@ export default function CurriculumView({
                   setActiveTrackId(track.id);
                   setCurrentTrackId(track.id);
                 }}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all border ${isActiveTrack ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}>
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all border cursor-pointer ${isActiveTrack ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}>
                 {track.name}
               </button>
             );
@@ -194,7 +194,7 @@ export default function CurriculumView({
                 id={`module-tab-${mod.id}`}
                 onClick={() => setActiveModuleId(mod.id)}
                 className={`
-                  w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between group
+                  w-full text-left p-3.5 rounded-xl border transition-all flex items-center justify-between group cursor-pointer
                   ${isActive 
                     ? 'bg-blue-50 border-blue-100 text-blue-700 font-semibold' 
                     : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
@@ -244,7 +244,7 @@ export default function CurriculumView({
                     id={`lesson-item-${lesson.id}`}
                     onClick={() => setSelectedLessonId(lesson.id)}
                     className={`
-                      w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between group
+                      w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between group cursor-pointer
                       ${active 
                         ? 'bg-blue-50/50 border-blue-500 shadow-sm text-slate-900' 
                         : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700 shadow-sm'
@@ -360,7 +360,7 @@ export default function CurriculumView({
             <div className="p-6 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex items-center justify-between">
               <button
                 onClick={() => setSelectedLessonId(null)}
-                className="hidden lg:block text-xs font-semibold text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200 transition-all shadow-sm"
+                className="hidden lg:block text-xs font-semibold text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200 transition-all shadow-sm cursor-pointer"
               >
                 Close Reader
               </button>
@@ -375,7 +375,7 @@ export default function CurriculumView({
                   id="complete-lesson-btn"
                   disabled={completing || completionSuccess}
                   onClick={handleCompleteLesson}
-                  className="w-full lg:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center space-x-2 shadow-sm shadow-blue-500/10"
+                  className="w-full lg:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center space-x-2 shadow-sm shadow-blue-500/10 cursor-pointer"
                 >
                   {completionSuccess ? (
                     <>

@@ -332,7 +332,7 @@ export default function DashboardView({
                   setSelectedLessonId(nextLesson!.id);
                   setActiveSection('curriculum');
                 }}
-                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center space-x-2 shadow-sm shadow-blue-500/10"
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center space-x-2 shadow-sm shadow-blue-500/10 cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-current" />
                 <span>Resume Lesson</span>

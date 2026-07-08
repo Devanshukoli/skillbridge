@@ -144,7 +144,7 @@ export default function AdminView({ user, onRefreshCurriculum }: AdminViewProps)
           <button
             id="admin-tab-submissions"
             onClick={() => { setActiveTab('submissions'); setSelectedSubId(null); }}
-            className={`px-5 py-2 text-xs font-bold rounded-lg transition-all ${
+            className={`px-5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               activeTab === 'submissions' 
                 ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50' 
                 : 'text-slate-500 hover:text-slate-800'
@@ -155,7 +155,7 @@ export default function AdminView({ user, onRefreshCurriculum }: AdminViewProps)
           <button
             id="admin-tab-claims"
             onClick={() => { setActiveTab('claims'); setSelectedSubId(null); }}
-            className={`px-5 py-2 text-xs font-bold rounded-lg transition-all ${
+            className={`px-5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               activeTab === 'claims' 
                 ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50' 
                 : 'text-slate-500 hover:text-slate-800'
@@ -181,7 +181,7 @@ export default function AdminView({ user, onRefreshCurriculum }: AdminViewProps)
                 id="admin-filter-select"
                 value={filterStatus}
                 onChange={(e) => { setFilterStatus(e.target.value); setSelectedSubId(null); }}
-                className="bg-slate-50 text-xs text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
+                className="bg-slate-50 text-xs text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer"
               >
                 <option value="submitted">Submitted (New)</option>
                 <option value="changes_requested">Changes Requested</option>

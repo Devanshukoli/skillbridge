@@ -159,7 +159,7 @@ export default function ProjectSubmissionView({
       <div className={`lg:col-span-4 space-y-6 ${activeProject ? 'hidden lg:block' : 'block'}`}>
         <div className="space-y-1">
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Project Pipelines</h2>
-          <p className="text-slate-505 text-sm">Convert theoretical knowledge into verified code portfolios.</p>
+          <p className="text-slate-500 text-sm">Convert theoretical knowledge into verified code portfolios.</p>
         </div>
 
         <div className="space-y-3">
@@ -174,10 +174,10 @@ export default function ProjectSubmissionView({
                 id={`project-item-${proj.id}`}
                 onClick={() => setSelectedProjectId(proj.id)}
                 className={`
-                  w-full text-left p-4 rounded-2xl border transition-all flex flex-col justify-between group h-36
+                  w-full text-left p-4 rounded-2xl border transition-all flex flex-col justify-between group h-36 cursor-pointer
                   ${isSelected 
                     ? 'bg-blue-50/50 border-blue-500 shadow-sm text-slate-900' 
-                    : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700 shadow-sm'
+                    : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 shadow-sm transition-colors'
                   }
                 `}
               >
@@ -231,7 +231,7 @@ export default function ProjectSubmissionView({
               <div className="flex items-center justify-between">
                 <button 
                   onClick={() => setSelectedProjectId(null)}
-                  className="p-1.5 bg-white text-slate-500 hover:text-slate-800 rounded-xl border border-slate-200 lg:hidden flex items-center space-x-1 text-xs"
+                  className="p-1.5 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 hover:border-slate-300 rounded-xl border border-slate-200 lg:hidden flex items-center space-x-1 text-xs transition-colors"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Back</span>
@@ -441,7 +441,7 @@ export default function ProjectSubmissionView({
                       id="submit-project-btn"
                       type="submit"
                       disabled={loading}
-                      className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center space-x-2 shadow-sm shadow-blue-500/10"
+                      className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center space-x-2 shadow-sm shadow-blue-500/10 cursor-pointer"
                     >
                       <Send className="w-4 h-4" />
                       <span>{activeSubmission ? 'Re-Submit Solution' : 'Submit Project for Review'}</span>

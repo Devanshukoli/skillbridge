@@ -83,7 +83,7 @@ export default function Navbar({ user, activeSection, isSidebarCollapsed, onTogg
             <button
               type="button"
               onClick={onToggleSidebar}
-              className="hidden lg:inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-800/70 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
+              className="hidden lg:inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-800/70 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
               aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
@@ -139,7 +139,7 @@ export default function Navbar({ user, activeSection, isSidebarCollapsed, onTogg
                     setIsOpen(false);
                   }}
                   className={`
-                    w-full flex items-center rounded-xl transition-all group border-l-2
+                    w-full flex items-center rounded-xl transition-all group border-l-2 cursor-pointer
                     ${isSidebarCollapsed ? 'justify-center px-0 py-3' : 'justify-between px-3 py-2.5'}
                     ${isActive 
                       ? 'bg-blue-600/10 text-white border-blue-500 font-semibold' 
@@ -166,7 +166,7 @@ export default function Navbar({ user, activeSection, isSidebarCollapsed, onTogg
           <button
             id="nav-logout-btn"
             onClick={onLogout}
-            className={`w-full flex items-center rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/5 transition-all ${isSidebarCollapsed ? 'justify-center px-0 py-2.5' : 'space-x-3 px-3 py-2.5'}`}
+            className={`w-full flex items-center rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/5 transition-all cursor-pointer ${isSidebarCollapsed ? 'justify-center px-0 py-2.5' : 'space-x-3 px-3 py-2.5'}`}
             title="Log out"
           >
             <LogOut className="w-5 h-5 text-slate-400 group-hover:text-rose-400" />
