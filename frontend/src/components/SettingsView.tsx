@@ -677,7 +677,7 @@ function ToggleRow({ label, checked, onChange }: { label: string; checked: boole
         type="button"
         aria-pressed={checked}
         onClick={() => onChange(!checked)}
-        className={`w-11 h-6 rounded-full p-1 transition-colors ${checked ? 'bg-blue-600' : 'bg-slate-300'}`}
+        className={`w-11 h-6 rounded-full p-1 transition-colors cursor-pointer ${checked ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-300 hover:bg-slate-400'}`}
       >
         <span className={`block w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>

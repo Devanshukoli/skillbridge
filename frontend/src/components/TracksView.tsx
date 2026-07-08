@@ -66,7 +66,14 @@ export default function TracksView({ curriculum, onViewTrack }: TracksViewProps)
         {trackSummaries.map(({ track, moduleCount, lessonCount, completedCount, started }) => {
           const Icon = iconMap[track.icon] || Layers;
           return (
-            <div key={track.id} className="group bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div
+              key={track.id}
+              onClick={() => onViewTrack(track.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onViewTrack(track.id); }}
+              className="group bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-slate-300 transition-all cursor-pointer"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="rounded-2xl bg-blue-50 p-3 text-blue-600 inline-flex items-center justify-center">
                   <Icon className="w-6 h-6" />
@@ -93,13 +100,10 @@ export default function TracksView({ curriculum, onViewTrack }: TracksViewProps)
                   completed
                 </div>
               </div>
-              <button
-                onClick={() => onViewTrack(track.id)}
-                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700"
-              >
+              <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 group-hover:text-blue-700">
                 Preview track
-                <ArrowRight className="w-4 h-4" />
-              </button>
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </span>
             </div>
           );
         })}
