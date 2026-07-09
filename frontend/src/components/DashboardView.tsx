@@ -148,8 +148,8 @@ export default function DashboardView({
 
   // Motivation message based on experience / goals
   const getMotivationalHeader = () => {
-    const exp = user.profile.experienceLevel;
-    const goal = user.profile.goals;
+    const exp = user.profile.experienceLevel || '';
+    const goal = user.profile.goals || '';
     if (goal.includes('job') || goal.includes('professional')) {
       return `On track for your first Junior Developer job.`;
     } else if (exp.includes('Never coded')) {

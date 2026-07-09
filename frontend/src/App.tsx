@@ -178,7 +178,7 @@ export default function App() {
 
       {/* Primary Workspace Stage */}
       <main className={`flex-1 p-6 lg:p-10 pb-24 lg:pb-10 overflow-y-auto max-w-7xl mx-auto w-full ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
-        {activeSection === 'dashboard' && (
+        {activeSection === 'dashboard' && user.role !== 'admin' && (
           <DashboardView 
             user={user}
             onUserUpdate={setUser}
