@@ -204,7 +204,7 @@ export default function DashboardView({
               <button
                 id="claim-rewards-btn"
                 onClick={() => setClaimModalOpen(true)}
-                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-0.5 mt-1 transition-all"
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-0.5 mt-1 transition-all cursor-pointer"
               >
                 <span>Claim Payout</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -478,7 +478,7 @@ export default function DashboardView({
                       placeholder="100"
                       value={claimAmount}
                       onChange={(e) => setClaimAmount(e.target.value)}
-                      className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm font-mono"
+                      className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm font-mono resize-none overflow-y-auto"
                     />
                   </div>
                 </div>
@@ -491,7 +491,7 @@ export default function DashboardView({
                     id="claim-provider-select"
                     value={payoutMethod}
                     onChange={(e) => setPayoutMethod(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm cursor-pointer"
                   >
                     <option value="PayPal">PayPal Account</option>
                     <option value="Bank Transfer">Direct Wire Bank Transfer</option>
@@ -519,7 +519,7 @@ export default function DashboardView({
                     id="claim-cancel-btn"
                     type="button"
                     onClick={() => setClaimModalOpen(false)}
-                    className="flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-all bg-slate-50 rounded-xl border border-slate-200"
+                    className="flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-all bg-slate-50 rounded-xl border border-slate-200 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -527,7 +527,7 @@ export default function DashboardView({
                     id="claim-confirm-btn"
                     type="submit"
                     disabled={claimLoading}
-                    className="flex-1 py-2.5 text-xs font-semibold text-white transition-all bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-500/10"
+                    className="flex-1 py-2.5 text-xs font-semibold text-white transition-all bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-500/10 cursor-pointer"
                   >
                     {claimLoading ? 'Requesting...' : 'Request Payout'}
                   </button>

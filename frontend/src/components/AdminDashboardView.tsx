@@ -97,7 +97,7 @@ export default function AdminDashboardView({ user }: Props) {
                   <button
                     onClick={() => handlePayClaim(claim.id)}
                     disabled={payLoadingId === claim.id}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition-all shadow-sm w-full sm:w-auto"
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition-all shadow-sm w-full sm:w-auto cursor-pointer"
                   >
                     {payLoadingId === claim.id ? 'Processing...' : 'Mark Paid'}
                   </button>
