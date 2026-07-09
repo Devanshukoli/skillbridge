@@ -23,6 +23,7 @@ export interface User {
   name: string;
   email: string;
   role: 'student' | 'admin';
+  status?: 'active' | 'blocked';
   pointsBalance: number;
   claimableBalance: number;
   profile: UserProfile;
@@ -83,6 +84,18 @@ export interface Submission {
   projectType?: 'practice' | 'capstone';
   userName?: string;
   userEmail?: string;
+}
+
+export interface SubmissionHistory {
+  id: string;
+  submissionId: string;
+  adminId: string;
+  action: 'status_change' | 'comment';
+  oldStatus?: string;
+  newStatus?: string;
+  comment: string;
+  createdAt: string;
+  adminName?: string;
 }
 
 export interface Progress {

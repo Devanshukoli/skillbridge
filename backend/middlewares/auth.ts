@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../../frontend/src/types';
-import { loadDb } from '../server/db';
-import { isSupabaseEnabled, supabaseGetUserById } from '../server/supabase';
+import { supabaseGetUserById } from '../server/supabase';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'skillbridge_secret_signature_key_2026';
 
@@ -41,15 +40,14 @@ export async function authenticate(req: AuthenticatedRequest, res: Response, nex
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string; role: string };
     
     let user: User | null = null;
-    if (isSupabaseEnabled()) {
-      user = await supabaseGetUserById(decoded.userId);
-    } else {
-      const db = loadDb();
-      user = db.users.find(u => u.id === decoded.userId) || null;
-    }
+    user = await supabaseGetUserById(decoded.userId);
 
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized: User not found' });
+    }
+
+    if (user.status === 'blocked') {
+      return res.status(403).json({ error: 'Forbidden: Your account has been blocked' });
     }
 
     // Attach user to request

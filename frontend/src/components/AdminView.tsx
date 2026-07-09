@@ -1,73 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { User, Submission, Claim } from '../types';
+import { User, Submission, SubmissionHistory } from '../types';
 import { 
   ClipboardCheck, 
-  DollarSign, 
   AlertCircle, 
   CheckCircle, 
   Clock, 
   Github, 
   Globe, 
-  ArrowRight,
   ArrowLeft,
-  ShieldAlert,
-  SlidersHorizontal,
-  ChevronDown,
   XCircle,
-  Check
+  MessageSquare
 } from 'lucide-react';
 
-interface AdminViewProps {
+interface Props {
   user: User;
   onRefreshCurriculum: () => void;
 }
 
-export default function AdminView({ user, onRefreshCurriculum }: AdminViewProps) {
+export default function AdminView({ user, onRefreshCurriculum }: Props) {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [claims, setClaims] = useState<Claim[]>([]);
-  const [activeTab, setActiveTab] = useState<'submissions' | 'claims'>('submissions');
-  const [filterStatus, setFilterStatus] = useState<string>('submitted'); // submitted, approved, changes_requested, all
+  const [history, setHistory] = useState<SubmissionHistory[]>([]);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
 
   const [feedback, setFeedback] = useState('');
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reviewError, setReviewError] = useState('');
 
-  const [payLoadingId, setPayLoadingId] = useState<string | null>(null);
-
-  // Fetch admin data
-  const fetchAdminData = async () => {
+  const fetchSubmissions = async () => {
     try {
-      const subRes = await fetch('/api/admin/submissions');
-      const subData = await subRes.json();
-      if (subRes.ok) {
-        setSubmissions(subData);
-      }
-
-      const claimRes = await fetch('/api/admin/claims');
-      const claimData = await claimRes.json();
-      if (claimRes.ok) {
-        setClaims(claimData);
+      const res = await fetch('/api/admin/submissions');
+      if (res.ok) {
+        setSubmissions(await res.json());
       }
     } catch (err) {
-      console.error('Error fetching admin back office details', err);
+      console.error(err);
+    }
+  };
+
+  const fetchHistory = async (subId: string) => {
+    try {
+      const res = await fetch(`/api/admin/submissions/${subId}/history`);
+      if (res.ok) {
+        setHistory(await res.json());
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
   useEffect(() => {
-    fetchAdminData();
-  }, [activeTab]);
+    fetchSubmissions();
+  }, []);
 
-  const handleReviewSubmit = async (status: 'approved' | 'changes_requested' | 'rejected') => {
-    if (!selectedSubId) return;
-    if (!feedback) {
-      setReviewError('Please provide evaluation feedback/rubric review text.');
-      return;
+  useEffect(() => {
+    if (selectedSubId) {
+      fetchHistory(selectedSubId);
+    } else {
+      setHistory([]);
     }
+  }, [selectedSubId]);
 
+  const handleReviewSubmit = async (status: string) => {
+    if (!selectedSubId || !feedback) return;
     setReviewLoading(true);
-    setReviewError('');
     try {
       const res = await fetch(`/api/admin/submissions/${selectedSubId}/review`, {
         method: 'POST',
@@ -75,21 +71,15 @@ export default function AdminView({ user, onRefreshCurriculum }: AdminViewProps)
         body: JSON.stringify({ status, feedback })
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to review submission');
-      }
-
-      setReviewSuccess(true);
-      fetchAdminData();
-      onRefreshCurriculum();
-      
-      setTimeout(() => {
-        setReviewSuccess(false);
-        setSelectedSubId(null);
+      if (res.ok) {
         setFeedback('');
-      }, 2000);
-
+        fetchSubmissions();
+        fetchHistory(selectedSubId);
+        onRefreshCurriculum();
+      } else {
+        const err = await res.json();
+        setReviewError(err.error);
+      }
     } catch (err: any) {
       setReviewError(err.message);
     } finally {
@@ -97,405 +87,119 @@ export default function AdminView({ user, onRefreshCurriculum }: AdminViewProps)
     }
   };
 
-  const handlePayClaim = async (claimId: string) => {
-    setPayLoadingId(claimId);
-    try {
-      const res = await fetch(`/api/admin/claims/${claimId}/pay`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to resolve claim');
-      }
-
-      fetchAdminData();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setPayLoadingId(null);
-    }
-  };
-
-  const filteredSubmissions = submissions.filter(sub => {
-    if (filterStatus === 'all') return true;
-    return sub.status === filterStatus;
-  });
-
-  const activeSub = submissions.find(s => s.id === selectedSubId) || null;
+  const filteredSubmissions = submissions.filter(sub => filterStatus === 'all' || sub.status === filterStatus);
+  const activeSub = submissions.find(s => s.id === selectedSubId);
 
   return (
-    <div className="space-y-8 animate-fade-in text-slate-800">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in h-[calc(100vh-8rem)]">
       
-      {/* Admin Title Dashboard Header */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between shadow-sm">
-        <div className="space-y-1.5 text-center md:text-left">
-          <div className="flex items-center justify-center md:justify-start space-x-2 text-purple-600 font-bold font-mono text-xs uppercase tracking-wider">
-            <ShieldAlert className="w-4 h-4 text-purple-500" />
-            <span>Admin Control Center</span>
-          </div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Review Pipeline & Sponsorships</h1>
-          <p className="text-slate-500 text-xs">Evaluate submissions, leave code quality feedback, and sign off reward payouts.</p>
+      {/* Left List */}
+      <div className={`lg:col-span-4 flex flex-col bg-white border border-slate-200 rounded-3xl p-4 shadow-sm ${activeSub ? 'hidden lg:flex' : 'flex'}`}>
+        <div className="mb-4">
+          <select 
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-sm outline-none cursor-pointer"
+          >
+            <option value="all">All Submissions</option>
+            <option value="submitted">Pending</option>
+            <option value="changes_requested">Changes Requested</option>
+            <option value="approved">Approved</option>
+          </select>
         </div>
 
-        {/* Tab Selector */}
-        <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200 mt-4 md:mt-0">
-          <button
-            id="admin-tab-submissions"
-            onClick={() => { setActiveTab('submissions'); setSelectedSubId(null); }}
-            className={`px-5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-              activeTab === 'submissions' 
-                ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50' 
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Submissions ({submissions.filter(s => s.status === 'submitted').length} new)
-          </button>
-          <button
-            id="admin-tab-claims"
-            onClick={() => { setActiveTab('claims'); setSelectedSubId(null); }}
-            className={`px-5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-              activeTab === 'claims' 
-                ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50' 
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Claims ({claims.filter(c => c.status === 'pending').length} pending)
-          </button>
+        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+          {filteredSubmissions.map(sub => (
+            <button
+              key={sub.id}
+              onClick={() => { setSelectedSubId(sub.id); setFeedback(''); }}
+              className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer ${
+                selectedSubId === sub.id ? 'bg-purple-50 border-purple-300' : 'bg-white border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex justify-between items-start mb-1">
+                <span className="text-xs font-bold text-slate-800">{sub.projectTitle}</span>
+                <span className="text-[10px] font-mono capitalize px-1.5 py-0.5 rounded border bg-slate-50">{sub.status}</span>
+              </div>
+              <div className="text-[10px] text-slate-500 font-mono truncate">{sub.userName} • {sub.userEmail}</div>
+            </button>
+          ))}
+          {filteredSubmissions.length === 0 && (
+            <div className="text-center p-4 text-slate-400 text-sm">No submissions found.</div>
+          )}
         </div>
       </div>
 
-      {activeTab === 'submissions' ? (
-        /* SUBMISSIONS Tab */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Submissions List */}
-          <div className={`lg:col-span-5 space-y-4 ${activeSub ? 'hidden lg:block' : 'block'}`}>
-            <div className="flex items-center justify-between bg-white p-3.5 border border-slate-200 rounded-2xl shadow-sm">
-              <span className="text-xs font-bold text-slate-700 font-mono flex items-center space-x-1">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
-                <span>Filter Submissions</span>
-              </span>
-              <select
-                id="admin-filter-select"
-                value={filterStatus}
-                onChange={(e) => { setFilterStatus(e.target.value); setSelectedSubId(null); }}
-                className="bg-slate-50 text-xs text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer"
-              >
-                <option value="submitted">Submitted (New)</option>
-                <option value="changes_requested">Changes Requested</option>
-                <option value="approved">Approved</option>
-                <option value="all">All Submissions</option>
-              </select>
+      {/* Right Detail Pane */}
+      <div className={`lg:col-span-8 flex flex-col bg-white border border-slate-200 rounded-3xl p-6 shadow-sm overflow-hidden ${!activeSub ? 'hidden lg:flex' : 'flex'}`}>
+        {activeSub ? (
+          <div className="flex flex-col h-full">
+            <div className="border-b border-slate-100 pb-4 mb-4 flex-shrink-0">
+              <button onClick={() => setSelectedSubId(null)} className="lg:hidden mb-2 text-xs text-slate-500 flex items-center gap-1">
+                <ArrowLeft className="w-3 h-3"/> Back
+              </button>
+              <h2 className="text-xl font-bold">{activeSub.projectTitle}</h2>
+              <p className="text-sm text-slate-500">By {activeSub.userName} ({activeSub.userEmail})</p>
+              
+              <div className="flex gap-2 mt-3">
+                <a href={activeSub.repoUrl} target="_blank" className="flex items-center gap-1 text-xs px-3 py-1.5 bg-slate-100 rounded-lg"><Github className="w-4 h-4"/> Repo</a>
+                {activeSub.demoUrl && <a href={activeSub.demoUrl} target="_blank" className="flex items-center gap-1 text-xs px-3 py-1.5 bg-slate-100 rounded-lg"><Globe className="w-4 h-4"/> Demo</a>}
+              </div>
             </div>
 
-            <div className="space-y-2.5">
-              {filteredSubmissions.map((sub) => {
-                const active = selectedSubId === sub.id;
-                return (
-                  <button
-                    key={sub.id}
-                    id={`admin-sub-item-${sub.id}`}
-                    onClick={() => { setSelectedSubId(sub.id); setFeedback(''); }}
-                    className={`
-                      w-full text-left p-4 rounded-2xl border transition-all flex flex-col justify-between h-36 group
-                      ${active 
-                        ? 'bg-purple-50/50 border-purple-500 shadow-sm' 
-                        : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700 shadow-sm'
-                      }
-                    `}
-                  >
-                    <div className="w-full">
-                      <div className="flex justify-between items-start mb-1.5">
-                        <span className="text-[10px] font-mono text-slate-500 block truncate max-w-[70%]">
-                          {sub.userName} • {sub.userEmail}
-                        </span>
-                        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
-                          sub.projectType === 'capstone' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-blue-50 text-blue-700 border-blue-100'
-                        }`}>
-                          {sub.projectType}
-                        </span>
-                      </div>
-
-                      <h4 className={`text-sm font-bold truncate leading-tight ${active ? 'text-purple-950 font-extrabold' : 'text-slate-800 group-hover:text-slate-950'}`}>
-                        {sub.projectTitle}
-                      </h4>
-                    </div>
-
-                    <div className="flex justify-between items-center w-full pt-3 border-t border-slate-100 text-[11px] font-mono text-slate-400">
-                      <span className="flex items-center space-x-1">
-                        <Clock className="w-3 h-3" />
-                        <span>{new Date(sub.submittedAt).toLocaleDateString()}</span>
-                      </span>
-                      <span className={`font-bold capitalize ${
-                        sub.status === 'approved' ? 'text-emerald-600' :
-                        sub.status === 'submitted' ? 'text-amber-600' : 'text-orange-600'
-                      }`}>
-                        {sub.status.replace('_', ' ')}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-
-              {filteredSubmissions.length === 0 && (
-                <div className="p-8 text-center bg-white border border-slate-200 border-dashed rounded-3xl text-xs text-slate-500 shadow-sm">
-                  No submissions match the active filters.
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Submission Details Inspector */}
-          <div className={`lg:col-span-7 ${!activeSub ? 'hidden lg:block' : 'block'}`}>
-            {activeSub ? (
-              <div className="bg-white border border-slate-200 rounded-3xl p-6 lg:p-8 space-y-6 shadow-md">
-                
-                {/* Header info */}
-                <div className="space-y-4 pb-4 border-b border-slate-100">
-                  <div className="flex justify-between items-start">
-                    <button 
-                      onClick={() => setSelectedSubId(null)}
-                      className="p-1.5 bg-white text-slate-500 hover:text-slate-800 rounded-xl border border-slate-200 lg:hidden text-xs flex items-center space-x-1"
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>Back</span>
-                    </button>
-
-                    <div className="text-right ml-auto">
-                      <span className="text-[10px] font-mono text-slate-400 block animate-pulse">SUBMITTED ON</span>
-                      <span className="text-xs font-mono text-slate-600 font-bold">{new Date(activeSub.submittedAt).toLocaleString()}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-mono text-purple-600 uppercase tracking-wider font-bold block mb-1">
-                      Student Account
-                    </span>
-                    <h3 className="text-lg font-bold text-slate-900 leading-none">{activeSub.userName}</h3>
-                    <p className="text-slate-500 text-xs mt-1 font-mono">{activeSub.userEmail}</p>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
-                      PROJECT CHALLENGE EVALUATED
-                    </span>
-                    <h2 className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                      {activeSub.projectTitle}
-                    </h2>
-                  </div>
-
-                  <div className="flex space-x-3 pt-2">
-                    <a
-                      href={activeSub.repoUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-4 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all shadow-sm"
-                    >
-                      <Github className="w-4 h-4 text-emerald-600" />
-                      <span>Explore Repository</span>
-                    </a>
-                    {activeSub.demoUrl && (
-                      <a
-                        href={activeSub.demoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-4 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all shadow-sm"
-                      >
-                        <Globe className="w-4 h-4 text-blue-600" />
-                        <span>Live Deployment</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-                {/* Engineering approach writeup */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
-                    Student Architecture & Decisions Write-up
-                  </h4>
-                  <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-slate-700 text-xs leading-relaxed font-normal whitespace-pre-wrap shadow-inner">
-                    {activeSub.writeup}
-                  </div>
-                </div>
-
-                {/* Review Action Panel */}
-                <div className="pt-6 border-t border-slate-100 space-y-4">
-                  <div className="space-y-1">
-                    <h4 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
-                      Evaluation & Rubric Feedback Logs *
-                    </h4>
-                    <p className="text-[10px] text-slate-500 leading-normal">
-                      Write down structural design advice, error handling suggestions, and details matching grading rubrics.
-                    </p>
-                  </div>
-
-                  {reviewSuccess && (
-                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-700 text-xs font-semibold">
-                      Evaluation log posted successfully!
-                    </div>
-                  )}
-
-                  {reviewError && (
-                    <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-xs font-semibold">
-                      {reviewError}
-                    </div>
-                  )}
-
-                  {activeSub.status !== 'approved' && activeSub.status !== 'rejected' ? (
-                    <div className="space-y-4 animate-fade-in">
-                      <textarea
-                        id="admin-feedback-textarea"
-                        rows={4}
-                        required
-                        value={feedback}
-                        onChange={(e) => setFeedback(e.target.value)}
-                        placeholder="Detail your review here. Address functional checks: route parameters, payload schemas, and clean directory layout. Be specific!"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-purple-500 focus:bg-white text-xs leading-relaxed transition-colors"
-                      />
-
-                      <div className="flex flex-wrap gap-2.5 pt-2">
-                        <button
-                          id="admin-btn-approve"
-                          type="button"
-                          disabled={reviewLoading}
-                          onClick={() => handleReviewSubmit('approved')}
-                          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all flex items-center space-x-1.5 shadow-sm shadow-emerald-500/10"
-                        >
-                          <CheckCircle className="w-4 h-4 text-emerald-100" />
-                          <span>Approve & Credit Reward</span>
-                        </button>
-                        <button
-                          id="admin-btn-changes"
-                          type="button"
-                          disabled={reviewLoading}
-                          onClick={() => handleReviewSubmit('changes_requested')}
-                          className="px-5 py-2.5 bg-orange-50 hover:bg-orange-100/50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all flex items-center space-x-1.5 shadow-sm"
-                        >
-                          <AlertCircle className="w-4 h-4 text-orange-600" />
-                          <span>Request Revisions</span>
-                        </button>
-                        <button
-                          id="admin-btn-reject"
-                          type="button"
-                          disabled={reviewLoading}
-                          onClick={() => handleReviewSubmit('rejected')}
-                          className="px-5 py-2.5 bg-rose-50 hover:bg-rose-100/50 border border-rose-200 text-rose-700 font-bold rounded-xl text-xs transition-all flex items-center space-x-1.5 shadow-sm"
-                        >
-                          <XCircle className="w-4 h-4 text-rose-600" />
-                          <span>Reject Solution</span>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-3 text-xs leading-normal">
-                      <span className="font-semibold text-slate-500 block font-mono uppercase text-[10px]">Evaluation Completed</span>
-                      <div className="p-3 bg-white rounded-xl text-slate-700 italic border border-slate-200/60 shadow-sm">
-                        "{activeSub.reviewerFeedback}"
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono block">Status: {activeSub.status}</span>
-                    </div>
-                  )}
-
-                </div>
-
+            <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+              <div>
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Writeup</h4>
+                <div className="p-4 bg-slate-50 rounded-xl text-sm whitespace-pre-wrap">{activeSub.writeup}</div>
               </div>
-            ) : (
-              /* Empty state */
-              <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center flex flex-col items-center justify-center h-96 space-y-4 shadow-sm">
-                <div className="p-4 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100 shadow-sm">
-                  <ClipboardCheck className="w-8 h-8" />
-                </div>
-                <div className="space-y-1.5 max-w-xs">
-                  <h4 className="font-bold text-slate-900 text-base">Select Submission to Review</h4>
-                  <p className="text-slate-500 text-xs leading-normal">
-                    Select any student challenge submission from the list to launch full engineering code inspections and post feedback.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
 
-        </div>
-      ) : (
-        /* CLAIMS Tab */
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 lg:p-8 space-y-6 shadow-sm">
-          <div className="space-y-1">
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Claim Ledger</h3>
-            <p className="text-slate-500 text-xs">Verify pending corporate-funded sponsorship rewards and mark bank/PayPal transactions resolved.</p>
-          </div>
-
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-50 text-slate-500 font-mono text-[10px] uppercase tracking-wider border-b border-slate-200">
-                  <th className="p-4">Student Info</th>
-                  <th className="p-4">Requested Payout</th>
-                  <th className="p-4">Request Time</th>
-                  <th className="p-4">Disbursement Destination</th>
-                  <th className="p-4 text-center">Status</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {claims.map((claim) => (
-                  <tr key={claim.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4">
-                      <span className="font-semibold text-slate-900 block">{claim.userName}</span>
-                      <span className="text-slate-400 font-mono text-[10px] mt-0.5 block">{claim.userEmail}</span>
-                    </td>
-                    <td className="p-4 font-bold font-mono text-emerald-600 text-sm">
-                      ${claim.amount}.00
-                    </td>
-                    <td className="p-4 text-slate-500 font-mono text-[11px]">
-                      {new Date(claim.requestedAt).toLocaleString()}
-                    </td>
-                    <td className="p-4 font-normal text-slate-600 max-w-xs truncate">
-                      {claim.id.startsWith('paypal') ? 'PayPal ID: ' : ''}
-                      <span className="font-mono bg-slate-50 border border-slate-200 px-2 py-1 rounded text-[10px]">
-                        {claim.id}
-                      </span>
-                    </td>
-                    <td className="p-4 text-center">
-                      <span className={`px-2.5 py-1 rounded-full font-mono text-[10px] font-bold uppercase tracking-wider border ${
-                        claim.status === 'paid' 
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                          : 'bg-amber-50 text-amber-700 border-amber-100 animate-pulse'
-                      }`}>
-                        {claim.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      {claim.status === 'pending' ? (
-                        <button
-                          id={`admin-pay-claim-${claim.id}`}
-                          onClick={() => handlePayClaim(claim.id)}
-                          disabled={payLoadingId === claim.id}
-                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all text-[11px] inline-flex items-center space-x-1 shadow-sm shadow-blue-500/10"
-                        >
-                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                          <span>{payLoadingId === claim.id ? 'Marking...' : 'Mark Paid'}</span>
-                        </button>
-                      ) : (
-                        <span className="text-slate-400 font-mono text-[10px]">Resolved</span>
+              <div>
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Interaction History</h4>
+                <div className="space-y-3">
+                  {history.map(h => (
+                    <div key={h.id} className="p-3 border border-slate-100 rounded-xl bg-slate-50/50">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-bold text-sm text-slate-700">{h.adminName} <span className="font-normal text-slate-500 text-xs font-mono">- {new Date(h.createdAt).toLocaleString()}</span></span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded border bg-white capitalize">{h.action}</span>
+                      </div>
+                      <p className="text-sm text-slate-800">{h.comment}</p>
+                      {h.action === 'status_change' && (
+                        <div className="mt-2 text-[10px] font-mono text-slate-400">
+                          Status changed: <span className="line-through">{h.oldStatus}</span> &rarr; <span className="font-bold text-slate-600">{h.newStatus}</span>
+                        </div>
                       )}
-                    </td>
-                  </tr>
-                ))}
+                    </div>
+                  ))}
+                  {history.length === 0 && <p className="text-xs text-slate-400 italic">No history yet.</p>}
+                </div>
+              </div>
+            </div>
 
-                {claims.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-400 font-mono bg-white">
-                      No monetary reward claims have been filed yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            {/* Action Area */}
+            <div className="border-t border-slate-100 pt-4 mt-4 flex-shrink-0 space-y-3">
+              {reviewError && <div className="text-xs text-rose-600 p-2 bg-rose-50 rounded">{reviewError}</div>}
+              <textarea 
+                value={feedback}
+                onChange={e => setFeedback(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-purple-500"
+                placeholder="Leave feedback or a comment..."
+                rows={3}
+              />
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => handleReviewSubmit(activeSub.status)} disabled={reviewLoading} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"><MessageSquare className="w-3.5 h-3.5"/> Add Comment</button>
+                <button onClick={() => handleReviewSubmit('approved')} disabled={reviewLoading} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"><CheckCircle className="w-3.5 h-3.5"/> Approve</button>
+                <button onClick={() => handleReviewSubmit('changes_requested')} disabled={reviewLoading} className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"><AlertCircle className="w-3.5 h-3.5"/> Request Changes</button>
+                <button onClick={() => handleReviewSubmit('rejected')} disabled={reviewLoading} className="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"><XCircle className="w-3.5 h-3.5"/> Reject</button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-4">
+            <ClipboardCheck className="w-12 h-12 opacity-20"/>
+            <p className="text-sm">Select a submission to review.</p>
+          </div>
+        )}
+      </div>
 
     </div>
   );

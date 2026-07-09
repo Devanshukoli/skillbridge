@@ -28,17 +28,18 @@ interface NavbarProps {
 export default function Navbar({ user, activeSection, isSidebarCollapsed, onToggleSidebar, setActiveSection, onLogout }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const menuItems = [
+  const menuItems = user.role === 'admin' ? [
+    { id: 'dashboard', label: 'Dashboard', icon: Server },
+    { id: 'tracks', label: 'Tracks CMS', icon: Layers },
+    { id: 'submissions', label: 'Submissions', icon: ClipboardList },
+    { id: 'settings', label: 'User Mgt', icon: Settings },
+  ] : [
     { id: 'dashboard', label: 'Dashboard', icon: Server },
     { id: 'curriculum', label: 'Curriculum', icon: BookOpen },
     { id: 'tracks', label: 'Tracks', icon: Layers },
     { id: 'submissions', label: 'Submissions', icon: ClipboardList },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
-
-  if (user.role === 'admin') {
-    menuItems.push({ id: 'admin', label: 'Admin Panel', icon: Award });
-  }
 
   const avatar = getAvatarPreset(user.profile.avatarId);
 

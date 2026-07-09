@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 import { User } from '../../../frontend/src/types';
 import { authService } from './auth.service';
 import { JWT_SECRET, getCookies, AuthenticatedRequest } from '../../middlewares/auth';
-import { isSupabaseEnabled } from '../../server/supabase';
 import { sendWelcomeEmail } from './welcomeEmail';
 
 const GOOGLE_OAUTH_PASSWORD_MARKER = 'GOOGLE_OAUTH_NO_PASSWORD';
@@ -47,7 +46,7 @@ export class AuthController {
   // Check Supabase connection status
   async supabaseStatus(req: Request, res: Response, next: NextFunction) {
     try {
-      res.json({ enabled: isSupabaseEnabled() });
+      res.json({ enabled: true });
     } catch (err) {
       next(err);
     }

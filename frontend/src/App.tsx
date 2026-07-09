@@ -9,6 +9,9 @@ import TracksView from './components/TracksView';
 import ProjectSubmissionView from './components/ProjectSubmissionView';
 import SettingsView from './components/SettingsView';
 import AdminView from './components/AdminView';
+import AdminDashboardView from './components/AdminDashboardView';
+import AdminTracksCMSView from './components/AdminTracksCMSView';
+import AdminSettingsView from './components/AdminSettingsView';
 import { Code } from 'lucide-react';
 
 export default function App() {
@@ -186,7 +189,14 @@ export default function App() {
           />
         )}
 
-        {activeSection === 'curriculum' && (
+        {activeSection === 'dashboard' && user.role === 'admin' && (
+          <AdminDashboardView 
+            user={user}
+            onRefreshCurriculum={fetchCurriculum}
+          />
+        )}
+
+        {activeSection === 'curriculum' && user.role !== 'admin' && (
           <CurriculumView 
             user={user}
             onUserUpdate={setUser}
@@ -201,7 +211,7 @@ export default function App() {
           />
         )}
 
-        {activeSection === 'tracks' && (
+        {activeSection === 'tracks' && user.role !== 'admin' && (
           <TracksView
             curriculum={curriculum}
             onViewTrack={(trackId) => {
@@ -211,7 +221,14 @@ export default function App() {
           />
         )}
 
-        {activeSection === 'submissions' && (
+        {activeSection === 'tracks' && user.role === 'admin' && (
+          <AdminTracksCMSView
+            curriculum={curriculum}
+            onRefreshCurriculum={fetchCurriculum}
+          />
+        )}
+
+        {activeSection === 'submissions' && user.role !== 'admin' && (
           <ProjectSubmissionView 
             user={user}
             onUserUpdate={setUser}
@@ -222,17 +239,24 @@ export default function App() {
           />
         )}
 
-        {activeSection === 'settings' && (
+        {activeSection === 'submissions' && user.role === 'admin' && (
+          <AdminView 
+            user={user}
+            onRefreshCurriculum={fetchCurriculum}
+          />
+        )}
+
+        {activeSection === 'settings' && user.role !== 'admin' && (
           <SettingsView
             user={user}
             onUserUpdate={setUser}
           />
         )}
 
-        {activeSection === 'admin' && user.role === 'admin' && (
-          <AdminView 
+        {activeSection === 'settings' && user.role === 'admin' && (
+          <AdminSettingsView
             user={user}
-            onRefreshCurriculum={fetchCurriculum}
+            onUserUpdate={setUser}
           />
         )}
       </main>

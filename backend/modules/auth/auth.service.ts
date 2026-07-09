@@ -1,61 +1,25 @@
 import bcrypt from 'bcryptjs';
 import { User } from '../../../frontend/src/types';
-import { loadDb, saveDb } from '../../server/db';
-import { isSupabaseEnabled, supabaseGetUser, supabaseCreateUser, supabaseGetUserById } from '../../server/supabase';
+import { supabaseGetUser, supabaseCreateUser, supabaseGetUserById } from '../../server/supabase';
 
 export class AuthService {
   async getUserByEmail(email: string): Promise<{ user: User; passwordHash: string } | null> {
     const normalizedEmail = email.toLowerCase();
-    
-    if (isSupabaseEnabled()) {
-      return await supabaseGetUser(normalizedEmail);
-    } else {
-      const db = loadDb();
-      const user = db.users.find(u => u.email.toLowerCase() === normalizedEmail);
-      if (!user) return null;
-      
-      const passwordHash = db.passwords[user.id] || '';
-      return { user, passwordHash };
-    }
+    return await supabaseGetUser(normalizedEmail);
   }
 
   async getUserById(userId: string): Promise<User | null> {
-    if (isSupabaseEnabled()) {
-      return await supabaseGetUserById(userId);
-    } else {
-      const db = loadDb();
-      return db.users.find(u => u.id === userId) || null;
-    }
+    return await supabaseGetUserById(userId);
   }
 
   async createUser(user: User, passwordHash: string): Promise<boolean> {
-    if (isSupabaseEnabled()) {
-      return await supabaseCreateUser(user, passwordHash);
-    } else {
-      const db = loadDb();
-      db.users.push(user);
-      db.passwords[user.id] = passwordHash;
-      saveDb(db);
-      return true;
-    }
+    return await supabaseCreateUser(user, passwordHash);
   }
 
   async changePassword(userId: string, newPassword: string): Promise<boolean> {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    if (isSupabaseEnabled()) {
-      const { supabaseUpdatePassword } = await import('../../server/supabase');
-      return await supabaseUpdatePassword(userId, hashedPassword);
-    } else {
-      const db = loadDb();
-      if (!db.passwords[userId]) {
-        return false;
-      }
-
-      db.passwords[userId] = hashedPassword;
-      saveDb(db);
-      return true;
-    }
+    const { supabaseUpdatePassword } = await import('../../server/supabase');
+    return await supabaseUpdatePassword(userId, hashedPassword);
   }
 }
 
