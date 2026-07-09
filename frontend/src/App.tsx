@@ -13,6 +13,7 @@ import AdminDashboardView from './components/AdminDashboardView';
 import AdminTracksCMSView from './components/AdminTracksCMSView';
 import AdminSettingsView from './components/AdminSettingsView';
 import { Code } from 'lucide-react';
+import { AppShellSkeleton } from './components/Skeleton';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -125,16 +126,7 @@ export default function App() {
 
   // 3. Render Session Boot Loading Screen
   if (loadingSession) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
-        {/* Minimalist modern ring spinner */}
-        <div className="w-12 h-12 rounded-full border-4 border-emerald-500/10 border-t-emerald-400 animate-spin" />
-        <div className="flex items-center space-x-2 text-slate-400 font-mono text-xs tracking-wider uppercase font-semibold">
-          <Code className="w-4 h-4 animate-pulse text-emerald-400" />
-          <span>Synchronizing Session...</span>
-        </div>
-      </div>
-    );
+    return <AppShellSkeleton />;
   }
 
   // 4. Render Auth Page if not authenticated

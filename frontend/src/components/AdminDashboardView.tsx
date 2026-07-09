@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Submission, Claim } from '../types';
 import { Server, Check, Clock } from 'lucide-react';
+import { AdminDashboardSkeleton } from './Skeleton';
 
 interface Props {
   user: User;
@@ -44,6 +45,10 @@ export default function AdminDashboardView({ user }: Props) {
 
   const pendingSubmissions = submissions.filter(s => s.status === 'submitted');
   const pendingClaims = claims.filter(c => c.status === 'pending');
+
+  if (loading) {
+    return <AdminDashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-8 animate-fade-in text-slate-800">

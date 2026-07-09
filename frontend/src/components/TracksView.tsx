@@ -1,6 +1,7 @@
 import React from 'react';
 import { Track, Module, Lesson, Progress } from '../types';
 import { Server, Database, Layers, BookOpen, Sparkles, ArrowRight } from 'lucide-react';
+import { TracksSkeleton } from './Skeleton';
 
 interface TracksViewProps {
   curriculum: {
@@ -21,6 +22,10 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export default function TracksView({ curriculum, onViewTrack }: TracksViewProps) {
+  if (curriculum.tracks.length === 0 && curriculum.modules.length === 0 && curriculum.lessons.length === 0) {
+    return <TracksSkeleton />;
+  }
+
   const trackSummaries = curriculum.tracks.map((track) => {
     const moduleCount = curriculum.modules.filter((mod) => mod.trackId === track.id).length;
     const lessonCount = curriculum.lessons.filter((lesson) => {

@@ -14,6 +14,7 @@ import {
   Sparkles,
   PlayCircle
 } from 'lucide-react';
+import { CurriculumSkeleton } from './Skeleton';
 
 interface CurriculumViewProps {
   user: User;
@@ -96,6 +97,10 @@ export default function CurriculumView({
       }
     }
   }, [selectedLessonId, activeModuleId, curriculum.lessons]);
+
+  if (curriculum.tracks.length === 0 && curriculum.modules.length === 0 && curriculum.lessons.length === 0) {
+    return <CurriculumSkeleton />;
+  }
 
   const activeLesson = curriculum.lessons.find((l) => l.id === selectedLessonId) || null;
   const sortedTracks = [...curriculum.tracks].sort((a, b) => a.name.localeCompare(b.name));

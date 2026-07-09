@@ -12,6 +12,7 @@ import {
   HelpCircle,
   Briefcase
 } from 'lucide-react';
+import { DashboardSkeleton } from './Skeleton';
 
 interface DashboardViewProps {
   user: User;
@@ -46,6 +47,10 @@ export default function DashboardView({
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimError, setClaimError] = useState('');
   const [claimSuccess, setClaimSuccess] = useState(false);
+
+  if (!curriculum || curriculum.tracks.length === 0 && curriculum.modules.length === 0 && curriculum.lessons.length === 0) {
+    return <DashboardSkeleton />;
+  }
 
   // Compute stats
   const totalLessons = curriculum.lessons.length;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { Settings, Edit, UserX, UserCheck, Key, CheckCircle, Search, Save, X } from 'lucide-react';
+import { AdminSettingsSkeleton } from './Skeleton';
 
 interface Props {
   user: User;
@@ -87,6 +88,10 @@ export default function AdminSettingsView({ user }: Props) {
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return <AdminSettingsSkeleton />;
+  }
 
   return (
     <div className="space-y-8 animate-fade-in text-slate-800 max-w-5xl mx-auto">
