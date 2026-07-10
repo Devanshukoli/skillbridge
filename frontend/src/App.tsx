@@ -72,8 +72,11 @@ export default function App() {
         const data = await res.json();
         if (data.user) {
           setUser(data.user);
+          const params = new URLSearchParams(window.location.search);
           if (data.user.role === 'admin') {
             setActiveSection('admin');
+          } else if (params.get('settings') === 'payment') {
+            setActiveSection('settings');
           }
         }
       } catch (err) {

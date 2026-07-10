@@ -9,6 +9,7 @@ import profileRouter from './modules/profile/profile.routes';
 import curriculumRouter from './modules/curriculum/curriculum.routes';
 import submissionsRouter from './modules/submissions/submissions.routes';
 import claimsRouter from './modules/claims/claims.routes';
+import paymentsRouter, { paymentsWebhookRouter } from './modules/payments/payments.routes';
 import adminRouter from './modules/admin/admin.routes';
 
 // Middleware Imports
@@ -17,6 +18,7 @@ import { errorHandler } from './middlewares/errorHandler';
 const app = express();
 const PORT = 3000;
 
+app.use('/api', paymentsWebhookRouter);
 app.use(express.json());
 
 // API Route Registrations
@@ -25,6 +27,7 @@ app.use('/api', profileRouter);
 app.use('/api', curriculumRouter);
 app.use('/api', submissionsRouter);
 app.use('/api', claimsRouter);
+app.use('/api', paymentsRouter);
 app.use('/api/admin', adminRouter);
 
 // Global Error Handling Middleware (must be registered after all routes)

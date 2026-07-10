@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { User } from '../types';
 import { avatarPresets } from '../avatarPresets';
+import { useStripeConnect } from '../hooks/useStripeConnect';
 import {
   Award,
   BriefcaseBusiness,
   Check,
   Clock,
+  CreditCard,
+  ExternalLink,
   FileText,
   Github,
   Globe,
@@ -15,6 +18,7 @@ import {
   Monitor,
   Moon,
   Plus,
+  RefreshCw,
   Save,
   Shield,
   Sun,
@@ -28,7 +32,7 @@ interface SettingsViewProps {
   onUserUpdate: (updatedUser: User) => void;
 }
 
-type SettingsTab = 'general' | 'account' | 'privacy';
+type SettingsTab = 'general' | 'account' | 'privacy' | 'payment';
 type AppearanceMode = 'system' | 'dark' | 'light';
 
 const experienceOptions = [
@@ -56,7 +60,10 @@ const appearanceOptions: Array<{ value: AppearanceMode; label: string; icon: Rea
 ];
 
 export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('settings') === 'payment' ? 'payment' : 'general';
+  });
   const [name, setName] = useState(user.name);
   const [avatarId, setAvatarId] = useState(user.profile.avatarId || avatarPresets[0].id);
   const [bio, setBio] = useState(user.profile.bio || '');
@@ -83,6 +90,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const stripeConnect = useStripeConnect(true);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -106,7 +114,8 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
   const tabs: Array<{ id: SettingsTab; label: string; icon: React.ElementType }> = [
     { id: 'general', label: 'General', icon: UserIcon },
     { id: 'account', label: 'Account', icon: Mail },
-    { id: 'privacy', label: 'Privacy', icon: Shield }
+    { id: 'privacy', label: 'Privacy', icon: Shield },
+    { id: 'payment', label: 'Payment', icon: CreditCard }
   ];
 
   const handleAddSkill = () => {
@@ -223,6 +232,11 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
       setPasswordLoading(false);
     }
   };
+
+  const stripeStatus = stripeConnect.status;
+  const stripeLastUpdated = stripeStatus.stripeUpdatedAt
+    ? new Date(stripeStatus.stripeUpdatedAt).toLocaleString()
+    : 'Not updated yet';
 
   return (
     <div className="max-w-6xl mx-auto animate-fade-in text-slate-800 space-y-6">
@@ -588,6 +602,76 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
               </div>
             </form>
           )}
+
+          {activeTab === 'payment' && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 lg:p-6 shadow-sm space-y-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-slate-950">Payment</h2>
+                    <p className="text-sm text-slate-500 mt-1">
+                      Receive rewards securely through Stripe. Connect is required before claiming sponsored project rewards.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void stripeConnect.refresh()}
+                  disabled={stripeConnect.loading}
+                  className="w-full sm:w-auto px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <RefreshCw className={`w-4 h-4 ${stripeConnect.loading ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              {stripeConnect.error && (
+                <div className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-sm text-rose-700">
+                  {stripeConnect.error}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <PaymentStatusField label="Status" value={stripeStatus.connected ? 'Connected' : 'Not Connected'} active={stripeStatus.connected} />
+                <ReadOnlyField label="Last Updated" value={stripeLastUpdated} />
+                <ReadOnlyField label="Account ID" value={stripeStatus.stripeAccountId || 'Not created yet'} />
+                <PaymentStatusField label="Payouts" value={stripeStatus.payoutsEnabled ? 'Enabled' : 'Not Enabled'} active={stripeStatus.payoutsEnabled} />
+                <PaymentStatusField label="Charges" value={stripeStatus.chargesEnabled ? 'Enabled' : 'Not Enabled'} active={stripeStatus.chargesEnabled} />
+                <PaymentStatusField label="Onboarding" value={stripeStatus.onboardingCompleted ? 'Completed' : 'Incomplete'} active={stripeStatus.onboardingCompleted} />
+              </div>
+
+              {stripeStatus.requirementsCurrentlyDue && stripeStatus.requirementsCurrentlyDue.length > 0 && (
+                <div className="p-4 rounded-xl border border-amber-100 bg-amber-50 text-sm text-amber-700">
+                  Stripe needs more onboarding information before payouts can be enabled.
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => void stripeConnect.connect()}
+                  disabled={stripeConnect.loading}
+                  className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>{stripeStatus.stripeAccountId ? 'Continue Stripe Onboarding' : 'Connect Stripe'}</span>
+                </button>
+                {stripeStatus.stripeAccountId && !stripeStatus.payoutsEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => void stripeConnect.disconnect()}
+                    disabled={stripeConnect.loading}
+                    className="w-full sm:w-auto px-5 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    Disconnect
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </div>
@@ -664,6 +748,20 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
       </label>
       <div className="min-h-11 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 break-all">
         {value}
+      </div>
+    </div>
+  );
+}
+
+function PaymentStatusField({ label, value, active }: { label: string; value: string; active: boolean }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+        {label}
+      </label>
+      <div className="min-h-11 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 flex items-center gap-2">
+        <span className={`w-2.5 h-2.5 rounded-full ${active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+        <span>{value}</span>
       </div>
     </div>
   );

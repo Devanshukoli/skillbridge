@@ -29,6 +29,23 @@ export interface User {
   profile: UserProfile;
   onboardingCompleted: boolean;
   createdAt: string;
+  stripeAccountId?: string | null;
+  stripeConnected?: boolean;
+  stripeChargesEnabled?: boolean;
+  stripePayoutsEnabled?: boolean;
+  stripeOnboardingCompleted?: boolean;
+  stripeUpdatedAt?: string | null;
+  stripeRequirementsCurrentlyDue?: string[];
+}
+
+export interface StripeConnectStatus {
+  connected: boolean;
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  onboardingCompleted: boolean;
+  stripeAccountId?: string | null;
+  stripeUpdatedAt?: string | null;
+  requirementsCurrentlyDue?: string[];
 }
 
 export interface Track {

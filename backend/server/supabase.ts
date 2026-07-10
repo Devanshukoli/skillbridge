@@ -3,6 +3,50 @@ import { User, Track, Module, Lesson, Project, Submission, Progress, Claim, Subm
 
 let supabaseInstance: SupabaseClient | null = null;
 
+type StripeConnectUserUpdates = {
+  stripeAccountId?: string | null;
+  stripeConnected?: boolean;
+  stripeChargesEnabled?: boolean;
+  stripePayoutsEnabled?: boolean;
+  stripeOnboardingCompleted?: boolean;
+  stripeUpdatedAt?: string | null;
+  stripeRequirementsCurrentlyDue?: string[];
+};
+
+function mapUserRow(data: any): User {
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    role: data.role,
+    status: data.status,
+    pointsBalance: data.points_balance,
+    claimableBalance: data.claimable_balance,
+    profile: data.profile,
+    onboardingCompleted: data.onboarding_completed,
+    createdAt: data.created_at,
+    stripeAccountId: data.stripe_account_id || null,
+    stripeConnected: data.stripe_connected || false,
+    stripeChargesEnabled: data.stripe_charges_enabled || false,
+    stripePayoutsEnabled: data.stripe_payouts_enabled || false,
+    stripeOnboardingCompleted: data.stripe_onboarding_completed || false,
+    stripeUpdatedAt: data.stripe_updated_at || null,
+    stripeRequirementsCurrentlyDue: data.stripe_requirements_currently_due || []
+  };
+}
+
+function mapStripeUserUpdatePayload(updates: StripeConnectUserUpdates): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  if (updates.stripeAccountId !== undefined) payload.stripe_account_id = updates.stripeAccountId;
+  if (updates.stripeConnected !== undefined) payload.stripe_connected = updates.stripeConnected;
+  if (updates.stripeChargesEnabled !== undefined) payload.stripe_charges_enabled = updates.stripeChargesEnabled;
+  if (updates.stripePayoutsEnabled !== undefined) payload.stripe_payouts_enabled = updates.stripePayoutsEnabled;
+  if (updates.stripeOnboardingCompleted !== undefined) payload.stripe_onboarding_completed = updates.stripeOnboardingCompleted;
+  if (updates.stripeUpdatedAt !== undefined) payload.stripe_updated_at = updates.stripeUpdatedAt;
+  if (updates.stripeRequirementsCurrentlyDue !== undefined) payload.stripe_requirements_currently_due = updates.stripeRequirementsCurrentlyDue;
+  return payload;
+}
+
 export function getSupabaseClient(): SupabaseClient {
   if (supabaseInstance) return supabaseInstance;
 
@@ -34,18 +78,7 @@ export async function supabaseGetUser(email: string): Promise<{ user: User; pass
     .eq('user_id', userData.id)
     .single();
 
-  const user: User = {
-    id: userData.id,
-    name: userData.name,
-    email: userData.email,
-    role: userData.role,
-    status: userData.status,
-    pointsBalance: userData.points_balance,
-    claimableBalance: userData.claimable_balance,
-    profile: userData.profile,
-    onboardingCompleted: userData.onboarding_completed,
-    createdAt: userData.created_at
-  };
+  const user = mapUserRow(userData);
 
   return { user, passwordHash: passData?.password_hash || '' };
 }
@@ -60,18 +93,7 @@ export async function supabaseGetUserById(id: string): Promise<User | null> {
 
   if (error || !data) return null;
 
-  return {
-    id: data.id,
-    name: data.name,
-    email: data.email,
-    role: data.role,
-    status: data.status,
-    pointsBalance: data.points_balance,
-    claimableBalance: data.claimable_balance,
-    profile: data.profile,
-    onboardingCompleted: data.onboarding_completed,
-    createdAt: data.created_at
-  };
+  return mapUserRow(data);
 }
 
 export async function supabaseCreateUser(user: User, passwordHash: string): Promise<boolean> {
@@ -88,7 +110,14 @@ export async function supabaseCreateUser(user: User, passwordHash: string): Prom
       claimable_balance: user.claimableBalance,
       profile: user.profile,
       onboarding_completed: user.onboardingCompleted,
-      created_at: user.createdAt
+      created_at: user.createdAt,
+      stripe_account_id: user.stripeAccountId || null,
+      stripe_connected: user.stripeConnected || false,
+      stripe_charges_enabled: user.stripeChargesEnabled || false,
+      stripe_payouts_enabled: user.stripePayoutsEnabled || false,
+      stripe_onboarding_completed: user.stripeOnboardingCompleted || false,
+      stripe_updated_at: user.stripeUpdatedAt || null,
+      stripe_requirements_currently_due: user.stripeRequirementsCurrentlyDue || []
     });
 
   if (userError) throw userError;
@@ -141,22 +170,40 @@ export async function supabaseUpdateUserProfile(
   return supabaseGetUserById(userId);
 }
 
+export async function supabaseUpdateUserStripeConnect(userId: string, updates: StripeConnectUserUpdates): Promise<User | null> {
+  const supabase = getSupabaseClient();
+  const payload = mapStripeUserUpdatePayload(updates);
+
+  if (Object.keys(payload).length === 0) {
+    return supabaseGetUserById(userId);
+  }
+
+  const { error } = await supabase
+    .from('skillbridge_users')
+    .update(payload)
+    .eq('id', userId);
+
+  if (error) throw error;
+  return supabaseGetUserById(userId);
+}
+
+export async function supabaseGetUserByStripeAccountId(stripeAccountId: string): Promise<User | null> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('skillbridge_users')
+    .select('*')
+    .eq('stripe_account_id', stripeAccountId)
+    .single();
+
+  if (error || !data) return null;
+  return mapUserRow(data);
+}
+
 export async function supabaseGetAllUsers(): Promise<User[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase.from('skillbridge_users').select('*').order('created_at', { ascending: false });
   if (error) throw error;
-  return (data || []).map(d => ({
-    id: d.id,
-    name: d.name,
-    email: d.email,
-    role: d.role,
-    status: d.status,
-    pointsBalance: d.points_balance,
-    claimableBalance: d.claimable_balance,
-    profile: d.profile,
-    onboardingCompleted: d.onboarding_completed,
-    createdAt: d.created_at
-  }));
+  return (data || []).map(mapUserRow);
 }
 
 // Curriculum Operations

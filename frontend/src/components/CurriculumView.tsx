@@ -293,7 +293,7 @@ export default function CurriculumView({
                     setSelectedProjectId(proj.id);
                     setActiveSection('submissions');
                   }}
-                  className="w-full text-left p-4 rounded-2xl border border-dashed border-slate-200 hover:border-blue-300 bg-white text-slate-700 shadow-sm transition-all flex items-center justify-between group"
+                  className="w-full text-left p-4 rounded-2xl border border-dashed border-slate-200 hover:border-blue-300 bg-white text-slate-700 shadow-sm transition-all flex items-center justify-between group cursor-pointer"
                 >
                   <div className="flex items-start space-x-3.5">
                     <div className="mt-0.5">

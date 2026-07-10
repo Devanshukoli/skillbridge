@@ -90,7 +90,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
             <button
               id="auth-tab-login"
               onClick={() => { setIsLogin(true); setError(''); }}
-              className={`py-2 text-sm font-semibold rounded-lg transition-all ${
+              className={`py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
                 isLogin 
                   ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50' 
                   : 'text-slate-500 hover:text-slate-800'
@@ -101,7 +101,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
             <button
               id="auth-tab-register"
               onClick={() => { setIsLogin(false); setError(''); }}
-              className={`py-2 text-sm font-semibold rounded-lg transition-all ${
+              className={`py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
                 !isLogin 
                   ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50' 
                   : 'text-slate-500 hover:text-slate-800'
@@ -185,7 +185,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
               id="auth-submit-btn"
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-semibold rounded-xl shadow-md hover:shadow-blue-500/10 transition-all text-sm flex items-center justify-center space-x-2"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-semibold rounded-xl shadow-md hover:shadow-blue-500/10 transition-all text-sm flex items-center justify-center space-x-2 cursor-pointer"
             >
               {loading ? (
                 <span>Loading...</span>
@@ -198,40 +198,6 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
             </button>
           </form>
 
-          {/* Quick Demo Credentials Help */}
-          {isLogin && (
-            <div className="bg-slate-50 p-3.5 border border-slate-200/60 rounded-xl">
-              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block font-semibold mb-1">
-                Demo Accounts
-              </span>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <button
-                  id="auth-quick-student-btn"
-                  type="button"
-                  onClick={() => {
-                    setEmail('student@skillbridge.com');
-                    setPassword('student123');
-                  }}
-                  className="text-left p-1.5 bg-white rounded hover:bg-slate-50 border border-slate-200 shadow-sm transition-all text-slate-700"
-                >
-                  <span className="text-blue-600 block font-bold">Student account</span>
-                  <span className="text-[10px] text-slate-400 font-mono block mt-0.5">student123</span>
-                </button>
-                <button
-                  id="auth-quick-admin-btn"
-                  type="button"
-                  onClick={() => {
-                    setEmail('admin@skillbridge.com');
-                    setPassword('admin123');
-                  }}
-                  className="text-left p-1.5 bg-white rounded hover:bg-slate-50 border border-slate-200 shadow-sm transition-all text-slate-700"
-                >
-                  <span className="text-purple-600 block font-bold">Admin reviewer</span>
-                  <span className="text-[10px] text-slate-400 font-mono block mt-0.5">admin123</span>
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Separator */}
           <div className="relative">
@@ -239,7 +205,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
               <div className="w-full border-t border-slate-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase font-mono">
-              <span className="bg-white px-3 text-slate-400">Or use OAuth 2.0</span>
+              <span className="bg-white px-3 text-slate-400">Or use Google Sign-In</span>
             </div>
           </div>
 
@@ -248,7 +214,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
             id="auth-google-btn"
             type="button"
             onClick={handleGoogleSignIn}
-            className="w-full py-3 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-semibold rounded-xl border border-slate-200 shadow-sm transition-all text-sm flex items-center justify-center space-x-2.5"
+            className="w-full py-3 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-semibold rounded-xl border border-slate-200 shadow-sm transition-all text-sm flex items-center justify-center space-x-2.5 cursor-pointer"
           >
             {/* Simple colored SVG Google Logo */}
             <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">

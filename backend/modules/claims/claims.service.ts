@@ -6,6 +6,7 @@ import {
   supabaseGetAllClaims,
   supabasePayClaim
 } from '../../server/supabase';
+import { paymentsService } from '../payments/payments.service';
 
 export class ClaimsService {
   async getUserClaims(user: User): Promise<Claim[]> {
@@ -14,6 +15,12 @@ export class ClaimsService {
   }
 
   async createClaimRequest(user: User, amount: number): Promise<{ claim: Claim; user: User }> {
+    await paymentsService.verifyClaimReadiness(user);
+
+    return this.claimReward(user, amount);
+  }
+
+  async claimReward(user: User, amount: number): Promise<{ claim: Claim; user: User }> {
     const freshUser = await supabaseGetUserById(user.id);
     const balance = freshUser ? freshUser.claimableBalance : user.claimableBalance;
     if (balance < amount) {
@@ -33,6 +40,9 @@ export class ClaimsService {
     if (!success) {
       throw new Error('Failed to request claim in database');
     }
+
+    // TODO: When employer payments are implemented, create the Stripe transfer
+    // to freshUser.stripeAccountId here after confirming funded source charges.
 
     const updatedUser = await supabaseGetUserById(user.id);
     if (!updatedUser) {

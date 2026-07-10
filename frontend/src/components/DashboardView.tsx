@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { User, Track, Module, Lesson, Project, Submission, Progress } from '../types';
+import { useStripeConnect } from '../hooks/useStripeConnect';
 import { 
   Award, 
   DollarSign, 
@@ -10,7 +11,8 @@ import {
   Clock, 
   TrendingUp,
   HelpCircle,
-  Briefcase
+  Briefcase,
+  ExternalLink
 } from 'lucide-react';
 import { DashboardSkeleton } from './Skeleton';
 
@@ -42,11 +44,11 @@ export default function DashboardView({
   
   const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [claimAmount, setClaimAmount] = useState('');
-  const [payoutMethod, setPayoutMethod] = useState('PayPal');
-  const [payoutDetails, setPayoutDetails] = useState('');
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimError, setClaimError] = useState('');
   const [claimSuccess, setClaimSuccess] = useState(false);
+  const [stripeGate, setStripeGate] = useState<{ title: string; message: string; canConnect: boolean } | null>(null);
+  const stripeConnect = useStripeConnect(false);
 
   if (!curriculum || curriculum.tracks.length === 0 && curriculum.modules.length === 0 && curriculum.lessons.length === 0) {
     return <DashboardSkeleton />;
@@ -105,6 +107,41 @@ export default function DashboardView({
     }
   }
 
+  const handleClaimClick = async () => {
+    setClaimError('');
+    setStripeGate(null);
+
+    try {
+      const status = await stripeConnect.fetchStatus();
+
+      if (!status.connected) {
+        setStripeGate({
+          title: 'Connect Stripe to receive rewards.',
+          message: 'Before claiming this reward you must connect your Stripe account.',
+          canConnect: true
+        });
+        return;
+      }
+
+      if (!status.payoutsEnabled) {
+        setStripeGate({
+          title: 'Your Stripe account is still being verified.',
+          message: 'Finish onboarding to receive payouts. Once Stripe enables payouts, you can claim this reward.',
+          canConnect: true
+        });
+        return;
+      }
+
+      setClaimModalOpen(true);
+    } catch (err: any) {
+      setStripeGate({
+        title: 'Payment status unavailable.',
+        message: err.message || 'We could not confirm your Stripe status. Please try again.',
+        canConnect: false
+      });
+    }
+  };
+
   const handleClaimSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseFloat(claimAmount);
@@ -114,10 +151,6 @@ export default function DashboardView({
     }
     if (amount > user.claimableBalance) {
       setClaimError(`Insufficient balance. You only have $${user.claimableBalance} available.`);
-      return;
-    }
-    if (!payoutDetails) {
-      setClaimError('Please provide account details for the payout.');
       return;
     }
 
@@ -139,7 +172,6 @@ export default function DashboardView({
         setClaimSuccess(false);
         setClaimModalOpen(false);
         setClaimAmount('');
-        setPayoutDetails('');
       }, 2500);
     } catch (err: any) {
       setClaimError(err.message);
@@ -208,10 +240,11 @@ export default function DashboardView({
             {user.claimableBalance > 0 ? (
               <button
                 id="claim-rewards-btn"
-                onClick={() => setClaimModalOpen(true)}
+                onClick={handleClaimClick}
+                disabled={stripeConnect.loading}
                 className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-0.5 mt-1 transition-all cursor-pointer"
               >
-                <span>Claim Payout</span>
+                <span>{stripeConnect.loading ? 'Checking Stripe...' : 'Claim Payout'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             ) : (
@@ -432,6 +465,40 @@ export default function DashboardView({
 
       </div>
 
+      {/* Stripe Connect Gate Modal */}
+      {stripeGate && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xl relative">
+            <h3 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
+              <Briefcase className="w-6 h-6 text-blue-600" />
+              <span>{stripeGate.title}</span>
+            </h3>
+            <p className="text-sm text-slate-500 leading-relaxed">{stripeGate.message}</p>
+
+            <div className="flex items-center space-x-2 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setStripeGate(null)}
+                className="flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-all bg-slate-50 rounded-xl border border-slate-200 cursor-pointer"
+              >
+                Cancel
+              </button>
+              {stripeGate.canConnect && (
+                <button
+                  type="button"
+                  onClick={() => void stripeConnect.connect()}
+                  disabled={stripeConnect.loading}
+                  className="flex-1 py-2.5 text-xs font-semibold text-white transition-all bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-500/10 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Connect Stripe</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Claim Payout Modal */}
       {claimModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
@@ -446,13 +513,13 @@ export default function DashboardView({
                 <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
                 <h4 className="text-lg font-bold text-slate-900">Payout Requested Successfully!</h4>
                 <p className="text-xs text-slate-500 leading-normal">
-                  Our system administration will manually verify your request and disburse your funds to your {payoutMethod} account shortly.
+                  Your reward claim has been recorded. Stripe transfer automation will be connected in the future payout flow.
                 </p>
               </div>
             ) : (
               <form onSubmit={handleClaimSubmit} className="space-y-4">
                 <p className="text-xs text-slate-500 leading-normal">
-                  Request a manual payout. Payout requests are verified and disbursed by team administrators within 2 working days.
+                  Request a reward claim for your Stripe-connected account. Funds are not transferred automatically yet.
                 </p>
 
                 {claimError && (
@@ -486,37 +553,6 @@ export default function DashboardView({
                       className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm font-mono resize-none overflow-y-auto"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider">
-                    Preferred Payout Provider
-                  </label>
-                  <select
-                    id="claim-provider-select"
-                    value={payoutMethod}
-                    onChange={(e) => setPayoutMethod(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm cursor-pointer"
-                  >
-                    <option value="PayPal">PayPal Account</option>
-                    <option value="Bank Transfer">Direct Wire Bank Transfer</option>
-                    <option value="Stripe Connect">Stripe Payouts</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider">
-                    Account Destination Details
-                  </label>
-                  <textarea
-                    id="claim-details-textarea"
-                    required
-                    rows={3}
-                    placeholder={payoutMethod === 'PayPal' ? 'e.g. email@paypal.com' : 'e.g. Account Number, SWIFT, Name, Routing details'}
-                    value={payoutDetails}
-                    onChange={(e) => setPayoutDetails(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm placeholder-slate-400"
-                  />
                 </div>
 
                 <div className="flex items-center space-x-2 pt-4 border-t border-slate-100">
