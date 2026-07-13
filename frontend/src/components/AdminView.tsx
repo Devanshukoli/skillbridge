@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { User, Submission, SubmissionHistory } from '../types';
-import { 
-  ClipboardCheck, 
-  AlertCircle, 
-  CheckCircle, 
-  Clock, 
-  Github, 
-  Globe, 
+import {
+  ClipboardCheck,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Github,
+  Globe,
   ArrowLeft,
   XCircle,
-  MessageSquare
+  MessageSquare,
+  Loader2
 } from 'lucide-react';
 
 interface Props {
@@ -186,10 +187,18 @@ export default function AdminView({ user, onRefreshCurriculum }: Props) {
                 rows={3}
               />
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => handleReviewSubmit(activeSub.status)} disabled={reviewLoading} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"><MessageSquare className="w-3.5 h-3.5"/> Add Comment</button>
-                <button onClick={() => handleReviewSubmit('approved')} disabled={reviewLoading} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"><CheckCircle className="w-3.5 h-3.5"/> Approve</button>
-                <button onClick={() => handleReviewSubmit('changes_requested')} disabled={reviewLoading} className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"><AlertCircle className="w-3.5 h-3.5"/> Request Changes</button>
-                <button onClick={() => handleReviewSubmit('rejected')} disabled={reviewLoading} className="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"><XCircle className="w-3.5 h-3.5"/> Reject</button>
+                <button onClick={() => handleReviewSubmit(activeSub.status)} disabled={reviewLoading} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer">
+                  {reviewLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><MessageSquare className="w-3.5 h-3.5"/> Add Comment</>}
+                </button>
+                <button onClick={() => handleReviewSubmit('approved')} disabled={reviewLoading} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer">
+                  {reviewLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><CheckCircle className="w-3.5 h-3.5"/> Approve</>}
+                </button>
+                <button onClick={() => handleReviewSubmit('changes_requested')} disabled={reviewLoading} className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer">
+                  {reviewLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><AlertCircle className="w-3.5 h-3.5"/> Request Changes</>}
+                </button>
+                <button onClick={() => handleReviewSubmit('rejected')} disabled={reviewLoading} className="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer">
+                  {reviewLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><XCircle className="w-3.5 h-3.5"/> Reject</>}
+                </button>
               </div>
             </div>
           </div>

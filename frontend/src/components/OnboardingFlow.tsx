@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from '../types';
-import { Check, Code, ArrowRight, Clock, Target, Award } from 'lucide-react';
+import { Check, Code, ArrowRight, Clock, Target, Award, Loader2 } from 'lucide-react';
 
 interface OnboardingFlowProps {
   user: User;
@@ -288,7 +288,7 @@ export default function OnboardingFlow({ user, onOnboardingComplete }: Onboardin
                 className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white transition-all text-sm font-bold flex items-center space-x-1.5 shadow-sm shadow-blue-500/10 cursor-pointer"
               >
                 {loading ? (
-                  <span>Saving...</span>
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
                     <span>Finish & Claim XP</span>

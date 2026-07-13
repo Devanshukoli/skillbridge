@@ -14,6 +14,7 @@ import {
   Globe,
   Linkedin,
   Lock,
+  Loader2,
   Mail,
   Monitor,
   Moon,
@@ -549,8 +550,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                   disabled={loading}
                   className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>{loading ? 'Saving...' : 'Save Settings'}</span>
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /><span>Save Settings</span></>}
                 </button>
               </div>
             </form>
@@ -639,8 +639,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                     disabled={passwordLoading}
                     className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
                   >
-                    <Lock className="w-4 h-4" />
-                    <span>{passwordLoading ? 'Updating...' : 'Update Password'}</span>
+                    {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Lock className="w-4 h-4" /><span>Update Password</span></>}
                   </button>
                 </div>
               </form>
@@ -666,8 +665,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                   disabled={loading}
                   className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>{loading ? 'Saving...' : 'Save Privacy'}</span>
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /><span>Save Privacy</span></>}
                 </button>
               </div>
             </form>
@@ -792,8 +790,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                   )}
 
                   <button type="submit" disabled={stripeConnect.loading} className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer">
-                    <Save className="w-4 h-4" />
-                    <span>{stripeConnect.loading ? 'Saving...' : 'Save Manual Payout Details'}</span>
+                    {stripeConnect.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /><span>Save Manual Payout Details</span></>}
                   </button>
                 </form>
               ) : (

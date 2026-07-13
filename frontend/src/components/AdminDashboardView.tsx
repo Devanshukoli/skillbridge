@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Submission, Claim, ManualPayoutDetails } from '../types';
-import { Server, Check, Clock } from 'lucide-react';
+import { Server, Check, Clock, Loader2 } from 'lucide-react';
 import { AdminDashboardSkeleton } from './Skeleton';
 
 interface Props {
@@ -13,6 +13,7 @@ export default function AdminDashboardView({ user }: Props) {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(true);
   const [payLoadingId, setPayLoadingId] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -35,9 +36,16 @@ export default function AdminDashboardView({ user }: Props) {
 
   const handlePayClaim = async (claimId: string) => {
     setPayLoadingId(claimId);
+    setPayError(null);
     try {
-      await fetch(`/api/admin/claims/${claimId}/pay`, { method: 'POST' });
+      const res = await fetch(`/api/admin/claims/${claimId}/pay`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setPayError(data?.error || 'Failed to pay claim. It has been left pending so you can retry.');
+      }
       fetchData();
+    } catch (e) {
+      setPayError('Network error while trying to pay this claim.');
     } finally {
       setPayLoadingId(null);
     }
@@ -97,6 +105,9 @@ function maskManualPayoutDetails(details?: ManualPayoutDetails | null) {
         {/* Pending Claims */}
         <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
           <h2 className="font-bold text-lg text-slate-800">Pending Reward Claims ({pendingClaims.length})</h2>
+          {payError && (
+            <div className="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{payError}</div>
+          )}
           {pendingClaims.length === 0 ? (
             <p className="text-slate-500 text-sm">All caught up!</p>
           ) : (
@@ -112,13 +123,16 @@ function maskManualPayoutDetails(details?: ManualPayoutDetails | null) {
                     {claim.payoutMethod === 'manual' && (
                       <div className="text-[10px] text-slate-500 mt-1">Manual payout: {maskManualPayoutDetails(claim.manualPayoutDetails)}</div>
                     )}
+                    {claim.failureReason && (
+                      <div className="text-[10px] text-red-600 mt-1">Last attempt failed: {claim.failureReason}</div>
+                    )}
                   </div>
                   <button
                     onClick={() => handlePayClaim(claim.id)}
                     disabled={payLoadingId === claim.id}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition-all shadow-sm w-full sm:w-auto cursor-pointer"
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition-all shadow-sm w-full sm:w-auto cursor-pointer flex items-center justify-center"
                   >
-                    {payLoadingId === claim.id ? 'Processing...' : 'Mark Paid'}
+                    {payLoadingId === claim.id ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Mark Paid'}
                   </button>
                 </div>
               ))}

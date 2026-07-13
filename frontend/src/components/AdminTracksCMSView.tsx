@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Track, Module, Lesson, Project } from '../types';
-import { Layers, Plus, Trash2, Edit, Save, X, BookOpen, Code, Folder } from 'lucide-react';
+import { Layers, Plus, Trash2, Edit, Save, X, BookOpen, Code, Folder, Loader2 } from 'lucide-react';
 
 interface Props {
   curriculum: any;
@@ -202,13 +202,12 @@ export default function AdminTracksCMSView({ curriculum, onRefreshCurriculum }: 
               )}
 
               <div className="pt-4 border-t border-slate-100 flex justify-end">
-                <button 
+                <button
                   onClick={handleSave}
                   disabled={loading}
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center gap-2 transition-colors cursor-pointer"
                 >
-                  <Save className="w-4 h-4"/>
-                  {loading ? 'Saving...' : 'Save'}
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4"/>Save</>}
                 </button>
               </div>
             </div>

@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { User, Track, Module, Lesson, Project, Submission, Progress } from '../types';
-import { 
-  Award, 
-  Github, 
-  Globe, 
-  CheckCircle, 
-  AlertCircle, 
-  FileText, 
-  Send, 
-  ChevronRight, 
-  Sparkles, 
-  DollarSign, 
+import {
+  Award,
+  Github,
+  Globe,
+  CheckCircle,
+  AlertCircle,
+  FileText,
+  Send,
+  ChevronRight,
+  Sparkles,
+  DollarSign,
   ArrowLeft,
   XCircle,
-  HelpCircle
+  HelpCircle,
+  Loader2
 } from 'lucide-react';
 
 interface ProjectSubmissionViewProps {
@@ -443,8 +444,7 @@ export default function ProjectSubmissionView({
                       disabled={loading}
                       className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center space-x-2 shadow-sm shadow-blue-500/10 cursor-pointer"
                     >
-                      <Send className="w-4 h-4" />
-                      <span>{activeSubmission ? 'Re-Submit Solution' : 'Submit Project for Review'}</span>
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" /><span>{activeSubmission ? 'Re-Submit Solution' : 'Submit Project for Review'}</span></>}
                     </button>
                   </div>
                 </form>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
-import { Settings, Edit, UserX, UserCheck, Key, CheckCircle, Search, Save, X } from 'lucide-react';
+import { Settings, Edit, UserX, UserCheck, Key, CheckCircle, Search, Save, X, Loader2 } from 'lucide-react';
 import { AdminSettingsSkeleton } from './Skeleton';
 
 interface Props {
@@ -227,13 +227,12 @@ export default function AdminSettingsView({ user }: Props) {
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleSaveEdit}
                 disabled={isSaving}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50"
               >
-                <Save className="w-4 h-4"/>
-                {isSaving ? 'Saving...' : 'Save Changes'}
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4"/>Save Changes</>}
               </button>
             </div>
           </div>

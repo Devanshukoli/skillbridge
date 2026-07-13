@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { User, Track, Module, Lesson, Project, Submission, Progress } from '../types';
 import { useStripeConnect } from '../hooks/useStripeConnect';
-import { 
-  Award, 
-  DollarSign, 
-  CheckCircle, 
-  BookOpen, 
-  Play, 
-  ArrowRight, 
-  Clock, 
+import {
+  Award,
+  DollarSign,
+  CheckCircle,
+  BookOpen,
+  Play,
+  ArrowRight,
+  Clock,
   TrendingUp,
   HelpCircle,
   Briefcase,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import { DashboardSkeleton } from './Skeleton';
 
@@ -239,8 +240,7 @@ export default function DashboardView({
                 disabled={stripeConnect.loading}
                 className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-0.5 mt-1 transition-all cursor-pointer"
               >
-                <span>{stripeConnect.loading ? 'Checking Stripe...' : 'Claim Payout'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                {stripeConnect.loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><span>Claim Payout</span><ArrowRight className="w-3.5 h-3.5" /></>}
               </button>
             ) : (
               <span className="text-xs text-slate-400 block">Unlocked by Capstones</span>
@@ -563,9 +563,9 @@ export default function DashboardView({
                     id="claim-confirm-btn"
                     type="submit"
                     disabled={claimLoading}
-                    className="flex-1 py-2.5 text-xs font-semibold text-white transition-all bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-500/10 cursor-pointer"
+                    className="flex-1 py-2.5 text-xs font-semibold text-white transition-all bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-500/10 cursor-pointer flex items-center justify-center"
                   >
-                    {claimLoading ? 'Requesting...' : 'Request Payout'}
+                    {claimLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Request Payout'}
                   </button>
                 </div>
               </form>

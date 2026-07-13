@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { User, Track, Module, Lesson, Project, Submission, Progress } from '../types';
 import MarkdownRenderer from './MarkdownRenderer';
-import { 
-  BookOpen, 
-  CheckCircle, 
-  Circle, 
-  Clock, 
-  Award, 
-  ArrowLeft, 
-  ChevronRight, 
+import {
+  BookOpen,
+  CheckCircle,
+  Circle,
+  Clock,
+  Award,
+  ArrowLeft,
+  ChevronRight,
   Lock,
   ThumbsUp,
   Sparkles,
-  PlayCircle
+  PlayCircle,
+  Loader2
 } from 'lucide-react';
 import { CurriculumSkeleton } from './Skeleton';
 
@@ -388,7 +389,7 @@ export default function CurriculumView({
                       <span>Earned 20 XP!</span>
                     </>
                   ) : completing ? (
-                    <span>Saving...</span>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
                       <span>Mark Complete & Earn 20 XP</span>

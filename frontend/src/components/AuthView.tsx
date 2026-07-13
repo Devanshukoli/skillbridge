@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { User } from '../types';
-import { Code, Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
+import { Code, Mail, Lock, User as UserIcon, ArrowRight, Loader2 } from 'lucide-react';
 
 interface AuthViewProps {
   onAuthSuccess: (user: User) => void;
@@ -188,7 +188,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
               className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-semibold rounded-xl shadow-md hover:shadow-blue-500/10 transition-all text-sm flex items-center justify-center space-x-2 cursor-pointer"
             >
               {loading ? (
-                <span>Loading...</span>
+                <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
                   <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
