@@ -7,6 +7,9 @@ const webhookRouter = Router();
 
 router.post('/payments/connect', authenticate, (req, res, next) => paymentsController.connect(req, res, next));
 router.get('/payments/status', authenticate, (req, res, next) => paymentsController.status(req, res, next));
+router.get('/payments/config', authenticate, (req, res, next) => paymentsController.config(req, res, next));
+router.get('/payments/payment-status', authenticate, (req, res, next) => paymentsController.paymentStatus(req, res, next));
+router.post('/payments/manual-payout', authenticate, (req, res, next) => paymentsController.manualPayout(req, res, next));
 router.post('/payments/refresh', authenticate, (req, res, next) => paymentsController.refresh(req, res, next));
 router.delete('/payments/connect', authenticate, (req, res, next) => paymentsController.disconnect(req, res, next));
 

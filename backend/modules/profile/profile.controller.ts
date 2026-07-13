@@ -59,7 +59,8 @@ export class ProfileController {
         timeCommitment,
         avatarId,
         appearance,
-        privacy
+        privacy,
+        country
       } = req.body;
 
       if (!name) {
@@ -71,6 +72,7 @@ export class ProfileController {
         skills: skills || user.profile.skills || [],
         goals: goals || user.profile.goals || '',
         timeCommitment: timeCommitment || user.profile.timeCommitment || '',
+        country: country || user.profile.country || '',
         avatarId: avatarId || user.profile.avatarId || 'blue-code',
         appearance: appearance || user.profile.appearance || 'system',
         privacy: privacy || user.profile.privacy || {

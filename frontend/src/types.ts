@@ -1,8 +1,30 @@
+export type ManualPayoutMethod = 'stripe' | 'manual';
+
+export interface ManualPayoutDetails {
+  type: 'bank' | 'upi' | 'paypal';
+  accountName?: string;
+  accountNumber?: string;
+  ifsc?: string;
+  upiId?: string;
+  paypalEmail?: string;
+}
+
+export interface PaymentStatus {
+  ready: boolean;
+  method: ManualPayoutMethod;
+  reason?: string;
+  requiresCountry: boolean;
+  stripeConnected: boolean;
+  payoutsEnabled: boolean;
+  requiresManualDetails: boolean;
+}
+
 export interface UserProfile {
   experienceLevel: string;
   skills: string[];
   goals: string;
   timeCommitment: string;
+  country?: string;
   avatarId?: string;
   appearance?: 'system' | 'dark' | 'light';
   privacy?: {
@@ -36,6 +58,8 @@ export interface User {
   stripeOnboardingCompleted?: boolean;
   stripeUpdatedAt?: string | null;
   stripeRequirementsCurrentlyDue?: string[];
+  payoutMethod?: ManualPayoutMethod;
+  manualPayoutDetails?: ManualPayoutDetails | null;
 }
 
 export interface StripeConnectStatus {
@@ -132,6 +156,8 @@ export interface Claim {
   resolvedAt?: string;
   userName?: string;
   userEmail?: string;
+  payoutMethod?: ManualPayoutMethod;
+  manualPayoutDetails?: ManualPayoutDetails | null;
 }
 
 export interface DashboardStats {

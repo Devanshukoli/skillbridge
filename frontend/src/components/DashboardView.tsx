@@ -112,22 +112,17 @@ export default function DashboardView({
     setStripeGate(null);
 
     try {
-      const status = await stripeConnect.fetchStatus();
-
-      if (!status.connected) {
-        setStripeGate({
-          title: 'Connect Stripe to receive rewards.',
-          message: 'Before claiming this reward you must connect your Stripe account.',
-          canConnect: true
-        });
-        return;
+      const res = await fetch('/api/claims/eligibility');
+      const eligibility = await res.json();
+      if (!res.ok) {
+        throw new Error(eligibility.error || 'Failed to check claim eligibility.');
       }
 
-      if (!status.payoutsEnabled) {
+      if (!eligibility.eligible) {
         setStripeGate({
-          title: 'Your Stripe account is still being verified.',
-          message: 'Finish onboarding to receive payouts. Once Stripe enables payouts, you can claim this reward.',
-          canConnect: true
+          title: 'Payout setup is incomplete.',
+          message: eligibility.reason || 'Complete your payout setup before claiming rewards.',
+          canConnect: eligibility.reason?.includes('Stripe') || false
         });
         return;
       }
@@ -136,7 +131,7 @@ export default function DashboardView({
     } catch (err: any) {
       setStripeGate({
         title: 'Payment status unavailable.',
-        message: err.message || 'We could not confirm your Stripe status. Please try again.',
+        message: err.message || 'We could not confirm your payout status. Please try again.',
         canConnect: false
       });
     }
@@ -519,7 +514,7 @@ export default function DashboardView({
             ) : (
               <form onSubmit={handleClaimSubmit} className="space-y-4">
                 <p className="text-xs text-slate-500 leading-normal">
-                  Request a reward claim for your Stripe-connected account. Funds are not transferred automatically yet.
+                  Request a reward claim for your selected payout method. Funds are not transferred automatically yet.
                 </p>
 
                 {claimError && (

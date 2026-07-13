@@ -9,6 +9,10 @@ import {
 import { paymentsService } from '../payments/payments.service';
 
 export class ClaimsService {
+  async getClaimEligibility(user: User): Promise<{ eligible: boolean; reason?: string }> {
+    return paymentsService.getClaimEligibility(user);
+  }
+
   async getUserClaims(user: User): Promise<Claim[]> {
     const claims = await supabaseGetUserClaims(user.id);
     return claims || [];

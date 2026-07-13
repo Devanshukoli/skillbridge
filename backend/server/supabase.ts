@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { User, Track, Module, Lesson, Project, Submission, Progress, Claim, SubmissionHistory } from '../../frontend/src/types';
+import { User, Track, Module, Lesson, Project, Submission, Progress, Claim, SubmissionHistory, ManualPayoutDetails, ManualPayoutMethod } from '../../frontend/src/types';
 
 let supabaseInstance: SupabaseClient | null = null;
 
@@ -31,7 +31,9 @@ function mapUserRow(data: any): User {
     stripePayoutsEnabled: data.stripe_payouts_enabled || false,
     stripeOnboardingCompleted: data.stripe_onboarding_completed || false,
     stripeUpdatedAt: data.stripe_updated_at || null,
-    stripeRequirementsCurrentlyDue: data.stripe_requirements_currently_due || []
+    stripeRequirementsCurrentlyDue: data.stripe_requirements_currently_due || [],
+    payoutMethod: data.payout_method || 'stripe',
+    manualPayoutDetails: data.manual_payout_details || null
   };
 }
 
@@ -98,6 +100,9 @@ export async function supabaseGetUserById(id: string): Promise<User | null> {
 
 export async function supabaseCreateUser(user: User, passwordHash: string): Promise<boolean> {
   const supabase = getSupabaseClient();
+  const payoutMethod = user.payoutMethod || 'stripe';
+  const manualPayoutDetails = user.manualPayoutDetails || null;
+
   const { error: userError } = await supabase
     .from('skillbridge_users')
     .insert({
@@ -117,7 +122,9 @@ export async function supabaseCreateUser(user: User, passwordHash: string): Prom
       stripe_payouts_enabled: user.stripePayoutsEnabled || false,
       stripe_onboarding_completed: user.stripeOnboardingCompleted || false,
       stripe_updated_at: user.stripeUpdatedAt || null,
-      stripe_requirements_currently_due: user.stripeRequirementsCurrentlyDue || []
+      stripe_requirements_currently_due: user.stripeRequirementsCurrentlyDue || [],
+      payout_method: payoutMethod,
+      manual_payout_details: manualPayoutDetails
     });
 
   if (userError) throw userError;
@@ -148,6 +155,8 @@ export async function supabaseUpdateUserProfile(
     pointsBalance?: number;
     claimableBalance?: number;
     status?: string;
+    payoutMethod?: ManualPayoutMethod;
+    manualPayoutDetails?: ManualPayoutDetails | null;
   }
 ): Promise<User | null> {
   const supabase = getSupabaseClient();
@@ -158,6 +167,8 @@ export async function supabaseUpdateUserProfile(
   if (updates.pointsBalance !== undefined) payload.points_balance = updates.pointsBalance;
   if (updates.claimableBalance !== undefined) payload.claimable_balance = updates.claimableBalance;
   if (updates.status !== undefined) payload.status = updates.status;
+  if (updates.payoutMethod !== undefined) payload.payout_method = updates.payoutMethod || 'stripe';
+  if (updates.manualPayoutDetails !== undefined) payload.manual_payout_details = updates.manualPayoutDetails || null;
 
   const { data, error } = await supabase
     .from('skillbridge_users')
@@ -350,9 +361,20 @@ export async function supabaseCreateClaimRequest(claim: Claim): Promise<boolean>
 
 export async function supabaseGetAllClaims(): Promise<any[] | null> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.from('skillbridge_claims').select(`*, skillbridge_users ( name, email )`);
+  const { data, error } = await supabase.from('skillbridge_claims').select(`*, skillbridge_users ( name, email, payout_method, manual_payout_details )`);
   if (error) throw error;
-  return (data || []).map(c => ({ id: c.id, userId: c.user_id, amount: c.amount, status: c.status, requestedAt: c.requested_at, resolvedAt: c.resolved_at, userName: c.skillbridge_users?.name || 'Unknown User', userEmail: c.skillbridge_users?.email || '' }));
+  return (data || []).map(c => ({
+    id: c.id,
+    userId: c.user_id,
+    amount: c.amount,
+    status: c.status,
+    requestedAt: c.requested_at,
+    resolvedAt: c.resolved_at,
+    userName: c.skillbridge_users?.name || 'Unknown User',
+    userEmail: c.skillbridge_users?.email || '',
+    payoutMethod: c.skillbridge_users?.payout_method || 'stripe',
+    manualPayoutDetails: c.skillbridge_users?.manual_payout_details || null
+  }));
 }
 
 export async function supabasePayClaim(claimId: string): Promise<boolean> {

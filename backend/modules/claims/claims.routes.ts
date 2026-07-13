@@ -5,6 +5,7 @@ import { claimsController } from './claims.controller';
 const router = Router();
 
 // Student claims endpoints
+router.get('/claims/eligibility', authenticate, (req, res, next) => claimsController.getClaimEligibility(req, res, next));
 router.get('/claims', authenticate, (req, res, next) => claimsController.getUserClaims(req, res, next));
 router.post('/claims/request', authenticate, (req, res, next) => claimsController.createClaimRequest(req, res, next));
 

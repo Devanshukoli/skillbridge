@@ -37,6 +37,51 @@ export class PaymentsController {
     }
   }
 
+  async config(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const config = await paymentsService.getConfig();
+      res.json(config);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async paymentStatus(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const status = await paymentsService.getPaymentStatus(user);
+      res.json(status);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async manualPayout(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const details = req.body?.details;
+      if (!details) {
+        return res.status(400).json({ error: 'Manual payout details are required.' });
+      }
+
+      const status = await paymentsService.updateManualPayoutDetails(user, details);
+      res.json(status);
+    } catch (err: any) {
+      if (err.message === 'Invalid manual payout details' || err.message === 'Manual payout details are required.') {
+        return res.status(400).json({ error: err.message });
+      }
+      next(err);
+    }
+  }
+
   async refresh(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const user = req.user;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { User } from '../types';
+import { ManualPayoutDetails, User } from '../types';
 import { avatarPresets } from '../avatarPresets';
 import { useStripeConnect } from '../hooks/useStripeConnect';
 import {
@@ -59,6 +59,8 @@ const appearanceOptions: Array<{ value: AppearanceMode; label: string; icon: Rea
   { value: 'light', label: 'Light', icon: Sun }
 ];
 
+const countryOptions = ['','US','IN','AE','TH','GB','CA','DE','AU','SG'];
+
 export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -81,6 +83,13 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
   const [publicProfile, setPublicProfile] = useState(user.profile.privacy?.publicProfile ?? true);
   const [showExternalLinks, setShowExternalLinks] = useState(user.profile.privacy?.showExternalLinks ?? true);
   const [showProgressBadges, setShowProgressBadges] = useState(user.profile.privacy?.showProgressBadges ?? true);
+  const [country, setCountry] = useState(user.profile.country || '');
+  const [manualPayoutType, setManualPayoutType] = useState<'bank' | 'upi' | 'paypal'>(user.manualPayoutDetails?.type || 'bank');
+  const [manualAccountName, setManualAccountName] = useState(user.manualPayoutDetails?.accountName || '');
+  const [manualAccountNumber, setManualAccountNumber] = useState(user.manualPayoutDetails?.accountNumber || '');
+  const [manualIfsc, setManualIfsc] = useState(user.manualPayoutDetails?.ifsc || '');
+  const [manualUpiId, setManualUpiId] = useState(user.manualPayoutDetails?.upiId || '');
+  const [manualPayPalEmail, setManualPayPalEmail] = useState(user.manualPayoutDetails?.paypalEmail || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -130,12 +139,32 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
     setSkills(skills.filter((skill) => skill !== skillToRemove));
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const buildProfilePayload = () => ({
+    name: name.trim(),
+    avatarId,
+    bio,
+    currentRole,
+    githubUrl,
+    linkedinUrl,
+    portfolioUrl,
+    resumeUrl,
+    skills,
+    experienceLevel,
+    goals,
+    timeCommitment,
+    appearance,
+    country,
+    privacy: {
+      publicProfile,
+      showExternalLinks,
+      showProgressBadges
+    }
+  });
 
+  const persistProfile = async () => {
     if (!name.trim()) {
       setError('Full name is required.');
-      return;
+      return false;
     }
 
     setLoading(true);
@@ -146,26 +175,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
       const res = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          avatarId,
-          bio,
-          currentRole,
-          githubUrl,
-          linkedinUrl,
-          portfolioUrl,
-          resumeUrl,
-          skills,
-          experienceLevel,
-          goals,
-          timeCommitment,
-          appearance,
-          privacy: {
-            publicProfile,
-            showExternalLinks,
-            showProgressBadges
-          }
-        })
+        body: JSON.stringify(buildProfilePayload())
       });
 
       const data = await res.json();
@@ -176,10 +186,67 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
       onUserUpdate(data.user);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
+      return true;
     } catch (err: any) {
       setError(err.message);
+      return false;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await persistProfile();
+  };
+
+  const handleCountryChange = async (nextCountry: string) => {
+    setCountry(nextCountry);
+    const payload = buildProfilePayload();
+    payload.country = nextCountry;
+
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update country');
+      }
+      onUserUpdate(data.user);
+      await stripeConnect.fetchPaymentStatus();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleManualPayoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const details: ManualPayoutDetails = { type: manualPayoutType } as ManualPayoutDetails;
+
+    if (manualPayoutType === 'bank') {
+      details.accountName = manualAccountName;
+      details.accountNumber = manualAccountNumber;
+      details.ifsc = manualIfsc;
+    }
+
+    if (manualPayoutType === 'upi') {
+      details.upiId = manualUpiId;
+    }
+
+    if (manualPayoutType === 'paypal') {
+      details.paypalEmail = manualPayPalEmail;
+    }
+
+    try {
+      await stripeConnect.setManualPayout(details);
+      await stripeConnect.fetchPaymentStatus();
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -237,6 +304,9 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
   const stripeLastUpdated = stripeStatus.stripeUpdatedAt
     ? new Date(stripeStatus.stripeUpdatedAt).toLocaleString()
     : 'Not updated yet';
+  const isUnsupportedCountry = Boolean(country && stripeConnect.unsupportedCountries.includes(country.toUpperCase()));
+  const paymentMethodLabel = stripeConnect.paymentStatus?.method === 'manual' ? 'Manual' : 'Stripe';
+  const paymentReadinessLabel = stripeConnect.paymentStatus?.ready ? 'Ready' : 'Needs setup';
 
   return (
     <div className="max-w-6xl mx-auto animate-fade-in text-slate-800 space-y-6">
@@ -613,7 +683,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                   <div>
                     <h2 className="font-bold text-slate-950">Payment</h2>
                     <p className="text-sm text-slate-500 mt-1">
-                      Receive rewards securely through Stripe. Connect is required before claiming sponsored project rewards.
+                      Choose how you want to receive rewards. Stripe is available in supported regions, and manual payout details work as a fallback.
                     </p>
                   </div>
                 </div>
@@ -634,42 +704,137 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <PaymentStatusField label="Status" value={stripeStatus.connected ? 'Connected' : 'Not Connected'} active={stripeStatus.connected} />
-                <ReadOnlyField label="Last Updated" value={stripeLastUpdated} />
-                <ReadOnlyField label="Account ID" value={stripeStatus.stripeAccountId || 'Not created yet'} />
-                <PaymentStatusField label="Payouts" value={stripeStatus.payoutsEnabled ? 'Enabled' : 'Not Enabled'} active={stripeStatus.payoutsEnabled} />
-                <PaymentStatusField label="Charges" value={stripeStatus.chargesEnabled ? 'Enabled' : 'Not Enabled'} active={stripeStatus.chargesEnabled} />
-                <PaymentStatusField label="Onboarding" value={stripeStatus.onboardingCompleted ? 'Completed' : 'Incomplete'} active={stripeStatus.onboardingCompleted} />
+              <div className="space-y-3">
+                <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                  Country
+                </label>
+                <select
+                  value={country}
+                  onChange={(e) => { void handleCountryChange(e.target.value); }}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm cursor-pointer"
+                >
+                  {countryOptions.map((option) => (
+                    <option key={option || 'select'} value={option}>
+                      {option ? option : 'Select your country'}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {stripeStatus.requirementsCurrentlyDue && stripeStatus.requirementsCurrentlyDue.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ReadOnlyField label="Payout Method" value={paymentMethodLabel} />
+                <ReadOnlyField label="Readiness" value={paymentReadinessLabel} />
+                <ReadOnlyField label="Country" value={country || 'Select your country'} />
+                <ReadOnlyField label="Last Updated" value={stripeLastUpdated} />
+              </div>
+
+              {stripeConnect.paymentStatus?.reason && (
                 <div className="p-4 rounded-xl border border-amber-100 bg-amber-50 text-sm text-amber-700">
-                  Stripe needs more onboarding information before payouts can be enabled.
+                  {stripeConnect.paymentStatus.reason}
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => void stripeConnect.connect()}
-                  disabled={stripeConnect.loading}
-                  className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>{stripeStatus.stripeAccountId ? 'Continue Stripe Onboarding' : 'Connect Stripe'}</span>
-                </button>
-                {stripeStatus.stripeAccountId && !stripeStatus.payoutsEnabled && (
-                  <button
-                    type="button"
-                    onClick={() => void stripeConnect.disconnect()}
-                    disabled={stripeConnect.loading}
-                    className="w-full sm:w-auto px-5 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    Disconnect
+              {!country ? (
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600">
+                  Select your country to determine your payout setup.
+                </div>
+              ) : isUnsupportedCountry ? (
+                <form onSubmit={handleManualPayoutSubmit} className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div>
+                    <h3 className="font-semibold text-slate-900">Manual Payout Details</h3>
+                    <p className="text-sm text-slate-500 mt-1">
+                      Stripe self-serve onboarding is not available in your country. Add manual payout details to claim rewards.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">Payout Type</label>
+                    <select
+                      value={manualPayoutType}
+                      onChange={(e) => setManualPayoutType(e.target.value as 'bank' | 'upi' | 'paypal')}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm cursor-pointer"
+                    >
+                      <option value="bank">Bank Transfer</option>
+                      <option value="upi">UPI</option>
+                      <option value="paypal">PayPal</option>
+                    </select>
+                  </div>
+
+                  {manualPayoutType === 'bank' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">Account Name</label>
+                        <input value={manualAccountName} onChange={(e) => setManualAccountName(e.target.value)} className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">Account Number</label>
+                        <input value={manualAccountNumber} onChange={(e) => setManualAccountNumber(e.target.value)} className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm" />
+                      </div>
+                      <div className="space-y-1.5 md:col-span-2">
+                        <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">IFSC</label>
+                        <input value={manualIfsc} onChange={(e) => setManualIfsc(e.target.value)} className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm" />
+                      </div>
+                    </div>
+                  )}
+
+                  {manualPayoutType === 'upi' && (
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">UPI ID</label>
+                      <input value={manualUpiId} onChange={(e) => setManualUpiId(e.target.value)} className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm" />
+                    </div>
+                  )}
+
+                  {manualPayoutType === 'paypal' && (
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">PayPal Email</label>
+                      <input type="email" value={manualPayPalEmail} onChange={(e) => setManualPayPalEmail(e.target.value)} className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm" />
+                    </div>
+                  )}
+
+                  <button type="submit" disabled={stripeConnect.loading} className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer">
+                    <Save className="w-4 h-4" />
+                    <span>{stripeConnect.loading ? 'Saving...' : 'Save Manual Payout Details'}</span>
                   </button>
-                )}
-              </div>
+                </form>
+              ) : (
+                <div className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <PaymentStatusField label="Status" value={stripeStatus.connected ? 'Connected' : 'Not Connected'} active={stripeStatus.connected} />
+                    <ReadOnlyField label="Account ID" value={stripeStatus.stripeAccountId || 'Not created yet'} />
+                    <PaymentStatusField label="Payouts" value={stripeStatus.payoutsEnabled ? 'Enabled' : 'Not Enabled'} active={stripeStatus.payoutsEnabled} />
+                    <PaymentStatusField label="Charges" value={stripeStatus.chargesEnabled ? 'Enabled' : 'Not Enabled'} active={stripeStatus.chargesEnabled} />
+                    <PaymentStatusField label="Onboarding" value={stripeStatus.onboardingCompleted ? 'Completed' : 'Incomplete'} active={stripeStatus.onboardingCompleted} />
+                  </div>
+
+                  {stripeStatus.requirementsCurrentlyDue && stripeStatus.requirementsCurrentlyDue.length > 0 && (
+                    <div className="p-4 rounded-xl border border-amber-100 bg-amber-50 text-sm text-amber-700">
+                      Stripe needs more onboarding information before payouts can be enabled.
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => void stripeConnect.connect()}
+                      disabled={stripeConnect.loading}
+                      className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>{stripeStatus.stripeAccountId ? 'Continue Stripe Onboarding' : 'Connect Stripe'}</span>
+                    </button>
+                    {stripeStatus.stripeAccountId && !stripeStatus.payoutsEnabled && (
+                      <button
+                        type="button"
+                        onClick={() => void stripeConnect.disconnect()}
+                        disabled={stripeConnect.loading}
+                        className="w-full sm:w-auto px-5 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        Disconnect
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>

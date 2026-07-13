@@ -3,6 +3,20 @@ import { AuthenticatedRequest } from '../../middlewares/auth';
 import { claimsService } from './claims.service';
 
 export class ClaimsController {
+  async getClaimEligibility(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const eligibility = await claimsService.getClaimEligibility(user);
+      res.json(eligibility);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // Get claims for authenticated user
   async getUserClaims(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {

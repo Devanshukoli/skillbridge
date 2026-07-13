@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Submission, Claim } from '../types';
+import { User, Submission, Claim, ManualPayoutDetails } from '../types';
 import { Server, Check, Clock } from 'lucide-react';
 import { AdminDashboardSkeleton } from './Skeleton';
 
@@ -45,6 +45,17 @@ export default function AdminDashboardView({ user }: Props) {
 
   const pendingSubmissions = submissions.filter(s => s.status === 'submitted');
   const pendingClaims = claims.filter(c => c.status === 'pending');
+
+function maskManualPayoutDetails(details?: ManualPayoutDetails | null) {
+  if (!details) return 'No manual payout details provided.';
+  if (details.type === 'bank') {
+    return `Bank • ${details.accountNumber ? 'XXXXXXXX' + details.accountNumber.slice(-4) : 'n/a'} • ${details.ifsc || 'n/a'}`;
+  }
+  if (details.type === 'upi') {
+    return `UPI • ${details.upiId ? details.upiId.replace(/.(?=.{2,}@)/g, '*') : 'n/a'}`;
+  }
+  return `PayPal • ${details.paypalEmail ? details.paypalEmail.replace(/(^.).*(@.*$)/, '$1***$2') : 'n/a'}`;
+}
 
   if (loading) {
     return <AdminDashboardSkeleton />;
@@ -98,6 +109,9 @@ export default function AdminDashboardView({ user }: Props) {
                       <span className="text-xs text-slate-500 font-mono">from {claim.userName}</span>
                     </div>
                     <div className="text-[10px] text-slate-400 font-mono">ID: {claim.id}</div>
+                    {claim.payoutMethod === 'manual' && (
+                      <div className="text-[10px] text-slate-500 mt-1">Manual payout: {maskManualPayoutDetails(claim.manualPayoutDetails)}</div>
+                    )}
                   </div>
                   <button
                     onClick={() => handlePayClaim(claim.id)}
