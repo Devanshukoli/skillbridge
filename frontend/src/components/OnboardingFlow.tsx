@@ -253,7 +253,7 @@ export default function OnboardingFlow({ user, onOnboardingComplete }: Onboardin
                   <Award className="w-5 h-5 mt-0.5 flex-shrink-0 text-emerald-600" />
                   <div>
                     <span className="font-extrabold block">Onboarding Completion Bonus!</span>
-                    Completing this questionnaire automatically awards you **50 XP** to kickstart your leaderboard status!
+                    Completing this questionnaire automatically awards you <strong>50 XP</strong> to kickstart your leaderboard status!
                   </div>
                 </div>
               </motion.div>
@@ -266,7 +266,7 @@ export default function OnboardingFlow({ user, onOnboardingComplete }: Onboardin
               id="onboarding-back-btn"
               disabled={step === 1 || loading}
               onClick={() => setStep(step - 1)}
-              className="px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-800 transition-all text-sm font-semibold disabled:opacity-30 disabled:pointer-events-none bg-slate-50 border border-slate-200"
+              className="px-5 py-2.5 rounded-xl text-slate-500 hover:text-slate-800 transition-all text-sm font-semibold disabled:opacity-30 disabled:pointer-events-none bg-slate-50 border border-slate-200 cursor-pointer"
             >
               Back
             </button>
@@ -275,7 +275,7 @@ export default function OnboardingFlow({ user, onOnboardingComplete }: Onboardin
               <button
                 id="onboarding-next-btn"
                 onClick={() => setStep(step + 1)}
-                className="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 shadow-sm transition-all text-sm font-semibold flex items-center space-x-1.5"
+                className="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 shadow-sm transition-all text-sm font-semibold flex items-center space-x-1.5 cursor-pointer"
               >
                 <span>Next</span>
                 <ArrowRight className="w-4 h-4" />
@@ -285,7 +285,7 @@ export default function OnboardingFlow({ user, onOnboardingComplete }: Onboardin
                 id="onboarding-finish-btn"
                 disabled={loading}
                 onClick={handleSubmit}
-                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white transition-all text-sm font-bold flex items-center space-x-1.5 shadow-sm shadow-blue-500/10"
+                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white transition-all text-sm font-bold flex items-center space-x-1.5 shadow-sm shadow-blue-500/10 cursor-pointer"
               >
                 {loading ? (
                   <span>Saving...</span>
