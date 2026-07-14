@@ -7,8 +7,8 @@ import { authService } from './auth.service';
 import { twoFactorService } from './twoFactor.service';
 import { JWT_SECRET, getCookies, AuthenticatedRequest } from '../../middlewares/auth';
 import { sendWelcomeEmail } from './welcomeEmail';
-
-const GOOGLE_OAUTH_PASSWORD_MARKER = 'GOOGLE_OAUTH_NO_PASSWORD';
+import { toPublicUser } from '@/backend/utils/ToPublicUser';
+import { GOOGLE_OAUTH_PASSWORD_MARKER } from './constants';
 
 interface GoogleTokenResponse {
   access_token?: string;
@@ -135,7 +135,7 @@ export class AuthController {
       }
 
       this.setSessionCookie(res, user);
-      res.json({ user });
+      res.json({ user: toPublicUser(user) });
     } catch (err) {
       next(err);
     }
@@ -389,7 +389,7 @@ export class AuthController {
 
       // Fetch updated user
       const updatedUser = await authService.getUserById(user.id);
-      res.json({ user: updatedUser });
+      res.json({ user: toPublicUser(updatedUser!) });
     } catch (err) {
       next(err);
     }
@@ -399,18 +399,36 @@ export class AuthController {
   async disableTwoFactor(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'Unauthorized' });
+      if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { password, token } = req.body;
+      if (!token) return res.status(400).json({ error: '2FA code is required' });
+
+      const data = await authService.getUserByEmail(user.email);
+      if (!data) return res.status(404).json({ error: 'User not found' });
+
+      const { user: storedUser, passwordHash } = data;
+      const isOAuthAccount = storedUser.authProvider === 'google';
+
+      if (!isOAuthAccount) {
+        if (!password) return res.status(400).json({ error: 'Password is required' });
+        const passwordMatches = await bcrypt.compare(password, passwordHash);
+        if (!passwordMatches) return res.status(400).json({ error: 'Incorrect password' });
       }
+      // OAuth accounts skip the password check entirely — the valid TOTP token below is their proof of identity
+
+      if (!storedUser.twoFactorEnabled || !storedUser.twoFactorSecret) {
+        return res.status(400).json({ error: '2FA is not enabled for this account' });
+      }
+
+      const tokenMatches = twoFactorService.verifyToken(token, storedUser.twoFactorSecret);
+      if (!tokenMatches) return res.status(400).json({ error: 'Invalid code, try again' });
 
       const success = await twoFactorService.disableTwoFactor(user.id);
-      if (!success) {
-        return res.status(500).json({ error: 'Failed to disable 2FA' });
-      }
+      if (!success) return res.status(500).json({ error: 'Failed to disable 2FA' });
 
-      // Fetch updated user
       const updatedUser = await authService.getUserById(user.id);
-      res.json({ user: updatedUser });
+      res.json({ user: toPublicUser(updatedUser!) });
     } catch (err) {
       next(err);
     }
@@ -444,7 +462,7 @@ export class AuthController {
       }
 
       this.setSessionCookie(res, user);
-      res.json({ user });
+      res.json({ user: toPublicUser(user) });
     } catch (err) {
       next(err);
     }

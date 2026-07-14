@@ -62,6 +62,7 @@ export interface User {
   manualPayoutDetails?: ManualPayoutDetails | null;
   twoFactorEnabled?: boolean;
   twoFactorSecret?: string | null;
+  authProvider?: 'local' | 'google';
 }
 
 export interface StripeConnectStatus {

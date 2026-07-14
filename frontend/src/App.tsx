@@ -12,11 +12,12 @@ import AdminView from './components/AdminView';
 import AdminDashboardView from './components/AdminDashboardView';
 import AdminTracksCMSView from './components/AdminTracksCMSView';
 import AdminSettingsView from './components/AdminSettingsView';
+import AdminUserManagementView from './components/AdminUserManagementView';
 import { Code } from 'lucide-react';
 import { AppShellSkeleton } from './components/Skeleton';
 
 const sectionsByRole: Record<User['role'], string[]> = {
-  admin: ['dashboard', 'tracks', 'submissions', 'settings'],
+  admin: ['dashboard', 'tracks', 'submissions', 'user-management', 'settings'],
   student: ['dashboard', 'curriculum', 'tracks', 'submissions', 'settings']
 };
 
@@ -285,6 +286,12 @@ export default function App() {
           <SettingsView
             user={user}
             onUserUpdate={setUser}
+          />
+        )}
+
+        {activeSection === 'user-management' && user.role === 'admin' && (
+          <AdminUserManagementView
+            user={user}
           />
         )}
 

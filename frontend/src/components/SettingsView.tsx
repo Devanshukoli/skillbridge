@@ -787,7 +787,13 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                 )}
 
                 {showTwoFactorSetup && (
-                  <div className="space-y-4">
+                  <form
+                    className="space-y-4"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleEnableTwoFactor();
+                    }}
+                  >
                     <p className="text-sm text-slate-600">
                       Scan the QR code below with your authenticator app, then enter the 6-digit code to verify.
                     </p>
@@ -802,11 +808,12 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                       </label>
                       <input
                         type="text"
+                        inputMode="numeric"
                         value={twoFactorToken}
                         onChange={(e) => setTwoFactorToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         placeholder="000000"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm font-mono tracking-widest text-center"
                         maxLength={6}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm font-mono tracking-widest text-center"
                       />
                     </div>
                     <div className="flex gap-3">
@@ -824,15 +831,14 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                         Cancel
                       </button>
                       <button
-                        type="button"
-                        onClick={handleEnableTwoFactor}
-                        disabled={twoFactorLoading}
+                        type="submit"
+                        disabled={twoFactorLoading || twoFactorToken.length !== 6}
                         className="flex-1 sm:flex-none px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
                       >
                         {twoFactorLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify & Enable'}
                       </button>
                     </div>
-                  </div>
+                  </form>
                 )}
 
                 {twoFactorEnabled && (
@@ -1064,6 +1070,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
     <DisableTwoFactorModal
       open={showDisableTwoFactorModal}
       loading={twoFactorLoading}
+      hasPassword={user.authProvider !== 'google'}
       error={disableTwoFactorError}
       onClose={() => {
         if (!twoFactorLoading) {
@@ -1080,12 +1087,13 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
 interface DisableTwoFactorModalProps {
   open: boolean;
   loading: boolean;
+  hasPassword: boolean;
   error: string;
   onClose: () => void;
   onConfirm: (password: string, token: string) => void;
 }
 
-function DisableTwoFactorModal({ open, loading, error, onClose, onConfirm }: DisableTwoFactorModalProps) {
+function DisableTwoFactorModal({ open, loading, error, hasPassword, onClose, onConfirm }: DisableTwoFactorModalProps) {
   const [password, setPassword] = useState('');
   const [token, setToken] = useState('');
 
@@ -1100,8 +1108,8 @@ function DisableTwoFactorModal({ open, loading, error, onClose, onConfirm }: Dis
     return null;
   }
 
-  const canSubmit = password.trim().length > 0 && token.length === 6 && !loading;
-
+ const canSubmit = (!hasPassword || password.trim().length > 0) && token.length === 6 && !loading;
+ 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 px-4 py-6">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
@@ -1127,18 +1135,12 @@ function DisableTwoFactorModal({ open, loading, error, onClose, onConfirm }: Dis
         </div>
 
         <div className="mt-5 space-y-4">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
-              Confirm your password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
-              autoComplete="current-password"
-            />
-          </div>
+           {hasPassword && (
+              <div className="space-y-1.5">
+                <label>Confirm your password</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+            )}
 
           <div className="space-y-1.5">
             <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">

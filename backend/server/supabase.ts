@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { User, Track, Module, Lesson, Project, Submission, Progress, Claim, SubmissionHistory, ManualPayoutDetails, ManualPayoutMethod } from '../../frontend/src/types';
+import { GOOGLE_OAUTH_PASSWORD_MARKER } from '../modules/auth/constants';
 
 let supabaseInstance: SupabaseClient | null = null;
 
@@ -33,7 +34,10 @@ function mapUserRow(data: any): User {
     stripeUpdatedAt: data.stripe_updated_at || null,
     stripeRequirementsCurrentlyDue: data.stripe_requirements_currently_due || [],
     payoutMethod: data.payout_method || 'stripe',
-    manualPayoutDetails: data.manual_payout_details || null
+    manualPayoutDetails: data.manual_payout_details || null,
+    twoFactorEnabled: data.two_factor_enabled || false,
+    twoFactorSecret: data.two_factor_secret || null,
+    authProvider: data.auth_provider || 'local',
   };
 }
 
@@ -102,6 +106,7 @@ export async function supabaseCreateUser(user: User, passwordHash: string): Prom
   const supabase = getSupabaseClient();
   const payoutMethod = user.payoutMethod || 'stripe';
   const manualPayoutDetails = user.manualPayoutDetails || null;
+  const authProvider = passwordHash === GOOGLE_OAUTH_PASSWORD_MARKER ? 'google' : 'local';
 
   const { error: userError } = await supabase
     .from('skillbridge_users')
@@ -124,7 +129,8 @@ export async function supabaseCreateUser(user: User, passwordHash: string): Prom
       stripe_updated_at: user.stripeUpdatedAt || null,
       stripe_requirements_currently_due: user.stripeRequirementsCurrentlyDue || [],
       payout_method: payoutMethod,
-      manual_payout_details: manualPayoutDetails
+      manual_payout_details: manualPayoutDetails,
+      auth_provider: authProvider 
     });
 
   if (userError) throw userError;
@@ -317,9 +323,9 @@ export async function supabaseGetAllSubmissions(): Promise<any[] | null> {
 export async function supabaseReviewSubmission(submissionId: string, status: string, feedback: string, reviewerId: string): Promise<{ success: boolean; submission?: any } | null> {
   const supabase = getSupabaseClient();
   const reviewedAt = new Date().toISOString();
-  
+
   const { data: oldSub } = await supabase.from('skillbridge_submissions').select('status').eq('id', submissionId).single();
-  
+
   const { data: sub, error: subErr } = await supabase.from('skillbridge_submissions').update({
     status, reviewer_id: reviewerId, reviewer_feedback: feedback, reviewed_at: reviewedAt
   }).eq('id', submissionId).select().single();
