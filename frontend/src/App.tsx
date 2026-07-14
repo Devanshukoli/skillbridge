@@ -15,6 +15,36 @@ import AdminSettingsView from './components/AdminSettingsView';
 import { Code } from 'lucide-react';
 import { AppShellSkeleton } from './components/Skeleton';
 
+const sectionsByRole: Record<User['role'], string[]> = {
+  admin: ['dashboard', 'tracks', 'submissions', 'settings'],
+  student: ['dashboard', 'curriculum', 'tracks', 'submissions', 'settings']
+};
+
+const getSectionStorageKey = (user: User) => `skillbridge:last-section:${user.id}`;
+
+const getStoredSection = (user: User) => {
+  try {
+    const storedSection = window.localStorage.getItem(getSectionStorageKey(user));
+    return storedSection && sectionsByRole[user.role].includes(storedSection)
+      ? storedSection
+      : 'dashboard';
+  } catch (err) {
+    return 'dashboard';
+  }
+};
+
+const persistStoredSection = (user: User, section: string) => {
+  if (!sectionsByRole[user.role].includes(section)) {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(getSectionStorageKey(user), section);
+  } catch (err) {
+    // Ignore storage failures so private browsing or blocked storage does not break navigation.
+  }
+};
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [activeSection, setActiveSection] = useState<string>('dashboard');
@@ -43,6 +73,17 @@ export default function App() {
 
   const [loadingSession, setLoadingSession] = useState(true);
   const [loadingCurriculum, setLoadingCurriculum] = useState(false);
+
+  const navigateToSection = (section: string, nextUser = user) => {
+    setActiveSection(section);
+    if (nextUser) {
+      persistStoredSection(nextUser, section);
+    }
+
+    // Auto clear specific reader selections when navigating tabs
+    if (section !== 'curriculum') setSelectedLessonId(null);
+    if (section !== 'submissions') setSelectedProjectId(null);
+  };
 
   useEffect(() => {
     const preference = user?.profile.appearance || 'system';
@@ -73,11 +114,10 @@ export default function App() {
         if (data.user) {
           setUser(data.user);
           const params = new URLSearchParams(window.location.search);
-          if (data.user.role === 'admin') {
-            setActiveSection('dashboard');
-          } else if (params.get('settings') === 'payment') {
-            setActiveSection('settings');
-          }
+          const restoredSection = data.user.role === 'student' && params.get('settings') === 'payment'
+            ? 'settings'
+            : getStoredSection(data.user);
+          navigateToSection(restoredSection, data.user);
         }
       } catch (err) {
         console.error('Session retrieval failed', err);
@@ -145,11 +185,7 @@ export default function App() {
   if (!user) {
     return <AuthView onAuthSuccess={(authenticatedUser) => {
       setUser(authenticatedUser);
-      if (authenticatedUser.role === 'admin') {
-        setActiveSection('dashboard');
-      } else {
-        setActiveSection('dashboard');
-      }
+      navigateToSection(getStoredSection(authenticatedUser), authenticatedUser);
     }} />;
   }
 
@@ -157,7 +193,7 @@ export default function App() {
   if (user.role === 'student' && !user.onboardingCompleted) {
     return <OnboardingFlow user={user} onOnboardingComplete={(updatedUser) => {
       setUser(updatedUser);
-      setActiveSection('dashboard');
+      navigateToSection('dashboard', updatedUser);
     }} />;
   }
 
@@ -171,12 +207,7 @@ export default function App() {
         activeSection={activeSection} 
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
-        setActiveSection={(section) => {
-          setActiveSection(section);
-          // Auto clear specific reader selections when navigating tabs
-          if (section !== 'curriculum') setSelectedLessonId(null);
-          if (section !== 'submissions') setSelectedProjectId(null);
-        }} 
+        setActiveSection={navigateToSection}
         onLogout={handleLogout} 
       />
 
@@ -187,7 +218,7 @@ export default function App() {
             user={user}
             onUserUpdate={setUser}
             curriculum={curriculum}
-            setActiveSection={setActiveSection}
+            setActiveSection={navigateToSection}
             setSelectedLessonId={setSelectedLessonId}
             setSelectedProjectId={setSelectedProjectId}
           />
@@ -208,7 +239,7 @@ export default function App() {
             onRefreshCurriculum={fetchCurriculum}
             selectedLessonId={selectedLessonId}
             setSelectedLessonId={setSelectedLessonId}
-            setActiveSection={setActiveSection}
+            setActiveSection={navigateToSection}
             setSelectedProjectId={setSelectedProjectId}
             currentTrackId={currentTrackId}
             setCurrentTrackId={setCurrentTrackId}
@@ -220,7 +251,7 @@ export default function App() {
             curriculum={curriculum}
             onViewTrack={(trackId) => {
               setCurrentTrackId(trackId);
-              setActiveSection('curriculum');
+              navigateToSection('curriculum');
             }}
           />
         )}
