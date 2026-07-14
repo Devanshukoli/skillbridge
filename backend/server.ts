@@ -14,12 +14,15 @@ import adminRouter from './modules/admin/admin.routes';
 
 // Middleware Imports
 import { errorHandler } from './middlewares/errorHandler';
+import { requestLogger } from './server/requestLogger';
+import { logger } from './server/logger';
 
 const app = express();
 const PORT = 3000;
 
 app.use('/api', paymentsWebhookRouter);
 app.use(express.json());
+app.use(requestLogger);
 
 // API Route Registrations
 app.use('/api/auth', authRouter);
@@ -53,7 +56,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[SkillBridge Server] booted on port ${PORT}`);
+    logger.info(`[SkillBridge Server] booted on port ${PORT}`);
   });
 }
 

@@ -14,7 +14,10 @@ The app supports:
 - Track discovery, including a sidebar Tracks view for previewing available or newly added paths.
 - Email notification for newly added local JSON tracks when SMTP is configured.
 - Admin review of project submissions.
-- Reward claims for capstone payouts.
+- Reward claims for capstone payouts with Stripe Connect integration for creator payouts.
+- Manual payout options (bank transfer, UPI, PayPal) for users in unsupported Stripe regions.
+- Admin dashboard for monitoring submissions and claims.
+- Admin settings and tracks CMS for content management.
 - Local JSON persistence by default, with optional Supabase persistence when Supabase env vars are present.
 
 ## Repository Shape
@@ -34,6 +37,8 @@ The app supports:
 |       |-- App.tsx              # top-level app state/router-by-section
 |       |-- types.ts             # shared domain interfaces
 |       |-- index.css            # global Tailwind/theme styles
+|       |-- hooks/               # custom React hooks (e.g., useStripeConnect)
+|       |-- avatarPresets.ts     # built-in avatar choices
 |       `-- components/          # view components
 `-- backend/
     |-- content/
@@ -47,13 +52,16 @@ The app supports:
     |-- middlewares/
     |   |-- auth.ts              # JWT cookie auth and admin gate
     |   `-- errorHandler.ts      # global JSON error handler
+    |-- migrations/              # database migration SQL files
     `-- modules/
         |-- auth/
         |-- profile/
         |-- curriculum/
         |-- notifications/
         |-- submissions/
-        `-- claims/
+        |-- claims/
+        |-- payments/            # Stripe Connect and manual payout handling
+        `-- admin/               # admin-specific endpoints
 ```
 
 ## Runtime Model
@@ -177,6 +185,17 @@ Claim routes are mounted under `/api`:
 - `GET /api/admin/claims` - admin only
 - `POST /api/admin/claims/:id/pay` - admin only
 
+Payment routes are mounted under `/api` and require auth:
+
+- `POST /api/payments/connect` - initiate Stripe Connect onboarding
+- `GET /api/payments/status` - get Stripe Connect status
+- `GET /api/payments/config` - get payment configuration (unsupported countries)
+- `GET /api/payments/payment-status` - get user's payment readiness status
+- `POST /api/payments/manual-payout` - save manual payout details
+- `POST /api/payments/refresh` - refresh Stripe Connect status from API
+- `DELETE /api/payments/connect` - disconnect Stripe account
+- `POST /api/payments/webhook` - Stripe webhook endpoint (no auth required)
+
 Auth is cookie-based. Login/register/Google OAuth set an HttpOnly `skillbridge_token` JWT cookie. `authenticate` reads that cookie, verifies it with `JWT_SECRET`, loads the user, then attaches `req.user`.
 
 ## Persistence Model
@@ -216,14 +235,17 @@ Canonical interfaces are in `frontend/src/types.ts`.
 
 Core entities:
 
-- `User`: role, balances, profile, onboarding state.
+- `User`: role, balances, profile, onboarding state, Stripe Connect status, payout method.
 - `Track`: curriculum track.
 - `Module`: ordered group within a track.
 - `Lesson`: markdown lesson content.
 - `Project`: practice or capstone assignment with rewards.
 - `Submission`: student project submission and review state.
 - `Progress`: lesson/project completion state.
-- `Claim`: reward payout request state.
+- `Claim`: reward payout request state with payout method and tracking.
+- `ManualPayoutDetails`: bank transfer, UPI, or PayPal details for manual payouts.
+- `StripeConnectStatus`: Stripe account connection and onboarding state.
+- `PaymentStatus`: user's payment readiness status.
 - `DashboardStats`: derived dashboard summary.
 
 Status values to preserve:
@@ -251,6 +273,12 @@ Known variables:
 - `SMTP_USER`: SMTP username.
 - `SMTP_PASS`: SMTP password.
 - `SMTP_FROM`: sender address used for track notification email.
+- `STRIPE_SECRET_KEY`: Stripe secret key for Connect integration.
+- `STRIPE_WEBHOOK_SECRET`: Stripe webhook secret for event verification.
+- `STRIPE_PUBLISHABLE_KEY`: Stripe publishable key for frontend.
+- `STRIPE_CONNECT_RETURN_URL`: Return URL after Stripe Connect onboarding.
+- `STRIPE_CONNECT_REFRESH_URL`: Refresh URL when Stripe Connect needs re-authentication.
+- `STRIPE_PAYOUT_CURRENCY`: Currency for Stripe payouts (default: usd).
 - `JWT_SECRET`: optional; backend falls back to a hard-coded development secret.
 - `NODE_ENV`: controls dev Vite middleware vs production static serving.
 - `DISABLE_HMR`: used by `vite.config.ts` to disable HMR/file watching in AI Studio-style environments.
@@ -341,6 +369,17 @@ Start with:
 - `frontend/src/types.ts`
 
 Claims draw from `claimableBalance`; capstone approval can increase that balance.
+
+### Change payment/stripe functionality
+
+Start with:
+
+- `backend/modules/payments/*`
+- `frontend/src/hooks/useStripeConnect.ts`
+- `frontend/src/components/SettingsView.tsx`
+- `frontend/src/types.ts`
+
+Payment system supports both Stripe Connect for supported countries and manual payouts (bank, UPI, PayPal) for unsupported regions. The system automatically determines the appropriate payout method based on the user's country and Stripe account status.
 
 ### Change storage provider behavior
 

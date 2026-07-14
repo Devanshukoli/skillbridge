@@ -8,6 +8,7 @@ import {
 } from '../../server/supabase';
 import { getStripeConfig } from './config';
 import { isStripeSelfServeUnsupported } from './unsupportedCountries';
+import { ConflictError } from '../../utils/AppError';
 
 type StripeAccountSnapshot = {
   stripeAccountId: string;
@@ -19,13 +20,17 @@ type StripeAccountSnapshot = {
   stripeRequirementsCurrentlyDue: string[];
 };
 
-function getStripeClient() {
+export function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) {
     throw new Error('Stripe is not configured');
   }
 
   return new Stripe(secretKey);
+}
+
+export function getPayoutCurrency() {
+  return (process.env.STRIPE_PAYOUT_CURRENCY || 'usd').toLowerCase();
 }
 
 function getConnectUrl(envKey: 'STRIPE_CONNECT_RETURN_URL' | 'STRIPE_CONNECT_REFRESH_URL') {
@@ -351,7 +356,7 @@ export class PaymentsService {
     const freshUser = await supabaseGetUserById(user.id);
     const eligibility = getClaimEligibility(freshUser || user);
     if (!eligibility.eligible) {
-      throw new Error(eligibility.reason || 'Payout setup is incomplete');
+      throw new ConflictError(eligibility.reason || 'Payout setup is incomplete');
     }
   }
 }

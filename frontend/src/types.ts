@@ -158,6 +158,9 @@ export interface Claim {
   userEmail?: string;
   payoutMethod?: ManualPayoutMethod;
   manualPayoutDetails?: ManualPayoutDetails | null;
+  stripeTransferId?: string | null;
+  failureReason?: string | null;
+  paidAt?: string | null;
 }
 
 export interface DashboardStats {

@@ -49,18 +49,6 @@ export class ClaimsController {
       const result = await claimsService.createClaimRequest(user, amount);
       res.status(201).json(result);
     } catch (err: any) {
-      if (err.message === 'Insufficient claimable balance') {
-        return res.status(400).json({ error: err.message });
-      }
-      if (err.message === 'Stripe account is not connected') {
-        return res.status(409).json({ error: 'Connect Stripe before claiming rewards.' });
-      }
-      if (err.message === 'Stripe payouts are not enabled') {
-        return res.status(409).json({ error: 'Your Stripe account is still being verified. Finish onboarding to receive payouts.' });
-      }
-      if (err.message === 'User not found') {
-        return res.status(404).json({ error: err.message });
-      }
       next(err);
     }
   }
@@ -80,11 +68,8 @@ export class ClaimsController {
     try {
       const claimId = req.params.id;
       const result = await claimsService.payClaim(claimId);
-      res.json({ success: true, claim: result });
+      res.json(result);
     } catch (err: any) {
-      if (err.message === 'Claim record not found') {
-        return res.status(404).json({ error: err.message });
-      }
       next(err);
     }
   }

@@ -373,14 +373,55 @@ export async function supabaseGetAllClaims(): Promise<any[] | null> {
     userName: c.skillbridge_users?.name || 'Unknown User',
     userEmail: c.skillbridge_users?.email || '',
     payoutMethod: c.skillbridge_users?.payout_method || 'stripe',
-    manualPayoutDetails: c.skillbridge_users?.manual_payout_details || null
+    manualPayoutDetails: c.skillbridge_users?.manual_payout_details || null,
+    stripeTransferId: c.stripe_transfer_id || null,
+    failureReason: c.failure_reason || null,
+    paidAt: c.paid_at || null
   }));
 }
 
-export async function supabasePayClaim(claimId: string): Promise<boolean> {
+export async function supabaseGetClaimById(claimId: string): Promise<Claim | null> {
   const supabase = getSupabaseClient();
-  await supabase.from('skillbridge_claims').update({ status: 'paid', resolved_at: new Date().toISOString() }).eq('id', claimId);
-  return true;
+  const { data, error } = await supabase.from('skillbridge_claims').select('*').eq('id', claimId).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    id: data.id,
+    userId: data.user_id,
+    amount: data.amount,
+    status: data.status,
+    requestedAt: data.requested_at,
+    resolvedAt: data.resolved_at,
+    stripeTransferId: data.stripe_transfer_id || null,
+    failureReason: data.failure_reason || null,
+    paidAt: data.paid_at || null
+  };
+}
+
+type PayClaimResult =
+  | { outcome: 'paid'; stripeTransferId?: string | null }
+  | { outcome: 'failed'; failureReason: string };
+
+export async function supabasePayClaim(claimId: string, result: PayClaimResult): Promise<boolean> {
+  const supabase = getSupabaseClient();
+
+  if (result.outcome === 'paid') {
+    const now = new Date().toISOString();
+    await supabase.from('skillbridge_claims').update({
+      status: 'paid',
+      resolved_at: now,
+      paid_at: now,
+      stripe_transfer_id: result.stripeTransferId || null,
+      failure_reason: null
+    }).eq('id', claimId);
+    return true;
+  }
+
+  // Failed attempt: keep the claim pending so an admin can retry, but record why it failed.
+  await supabase.from('skillbridge_claims').update({
+    failure_reason: result.failureReason
+  }).eq('id', claimId);
+  return false;
 }
 
 // CMS Operations
