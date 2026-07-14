@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { User } from '../../../frontend/src/types';
 import { authService } from './auth.service';
+import { twoFactorService } from './twoFactor.service';
 import { JWT_SECRET, getCookies, AuthenticatedRequest } from '../../middlewares/auth';
 import { sendWelcomeEmail } from './welcomeEmail';
 
@@ -126,6 +127,11 @@ export class AuthController {
       const match = await bcrypt.compare(password, passwordHash);
       if (!match) {
         return res.status(400).json({ error: 'Invalid email or password' });
+      }
+
+      // Check if 2FA is enabled
+      if (user.twoFactorEnabled) {
+        return res.json({ requires2FA: true, email: user.email });
       }
 
       this.setSessionCookie(res, user);
@@ -335,6 +341,110 @@ export class AuthController {
       this.setSessionCookie(res, user);
       res.append('Set-Cookie', 'skillbridge_oauth_state=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax');
       res.redirect(baseUrl);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // 2FA: Generate secret and QR code
+  async generateTwoFactorSecret(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const secret = twoFactorService.generateSecret();
+      const qrCodeUri = twoFactorService.generateQRCode(secret, user.email);
+
+      res.json({ secret, qrCodeUri });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // 2FA: Enable 2FA with verification
+  async enableTwoFactor(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { secret, token } = req.body;
+
+      if (!secret || !token) {
+        return res.status(400).json({ error: 'Secret and token are required' });
+      }
+
+      const isValid = twoFactorService.verifyToken(token, secret);
+      if (!isValid) {
+        return res.status(400).json({ error: 'Invalid token' });
+      }
+
+      const success = await twoFactorService.enableTwoFactor(user.id, secret);
+      if (!success) {
+        return res.status(500).json({ error: 'Failed to enable 2FA' });
+      }
+
+      // Fetch updated user
+      const updatedUser = await authService.getUserById(user.id);
+      res.json({ user: updatedUser });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // 2FA: Disable 2FA
+  async disableTwoFactor(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const success = await twoFactorService.disableTwoFactor(user.id);
+      if (!success) {
+        return res.status(500).json({ error: 'Failed to disable 2FA' });
+      }
+
+      // Fetch updated user
+      const updatedUser = await authService.getUserById(user.id);
+      res.json({ user: updatedUser });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // 2FA: Verify token during login
+  async verifyTwoFactorToken(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, token } = req.body;
+
+      if (!email || !token) {
+        return res.status(400).json({ error: 'Email and token are required' });
+      }
+
+      const normalizedEmail = email.toLowerCase();
+      const data = await authService.getUserByEmail(normalizedEmail);
+
+      if (!data) {
+        return res.status(400).json({ error: 'User not found' });
+      }
+
+      const { user } = data;
+
+      if (!user.twoFactorEnabled || !user.twoFactorSecret) {
+        return res.status(400).json({ error: '2FA is not enabled for this account' });
+      }
+
+      const isValid = twoFactorService.verifyToken(token, user.twoFactorSecret);
+      if (!isValid) {
+        return res.status(400).json({ error: 'Invalid token' });
+      }
+
+      this.setSessionCookie(res, user);
+      res.json({ user });
     } catch (err) {
       next(err);
     }

@@ -146,6 +146,36 @@ export async function supabaseUpdatePassword(userId: string, passwordHash: strin
   return true;
 }
 
+export async function supabaseUpdateUser(
+  userId: string,
+  updates: Record<string, any>
+): Promise<boolean> {
+  const supabase = getSupabaseClient();
+
+  const payload: Record<string, any> = {};
+
+  if (updates.twoFactorEnabled !== undefined)
+    payload.two_factor_enabled = updates.twoFactorEnabled;
+
+  if (updates.twoFactorSecret !== undefined)
+    payload.two_factor_secret = updates.twoFactorSecret;
+
+  if (updates.name !== undefined)
+    payload.name = updates.name;
+
+  if (updates.profile !== undefined)
+    payload.profile = updates.profile;
+
+  const { error } = await supabase
+    .from('skillbridge_users')
+    .update(payload)
+    .eq('id', userId);
+
+  if (error) throw error;
+
+  return true;
+}
+
 export async function supabaseUpdateUserProfile(
   userId: string,
   updates: {

@@ -60,6 +60,8 @@ export interface User {
   stripeRequirementsCurrentlyDue?: string[];
   payoutMethod?: ManualPayoutMethod;
   manualPayoutDetails?: ManualPayoutDetails | null;
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string | null;
 }
 
 export interface StripeConnectStatus {

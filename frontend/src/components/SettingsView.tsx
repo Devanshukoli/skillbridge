@@ -33,7 +33,7 @@ interface SettingsViewProps {
   onUserUpdate: (updatedUser: User) => void;
 }
 
-type SettingsTab = 'general' | 'account' | 'privacy' | 'payment';
+type SettingsTab = 'general' | 'account' | 'security' | 'privacy' | 'payment';
 type AppearanceMode = 'system' | 'dark' | 'light';
 
 const experienceOptions = [
@@ -102,6 +102,15 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const stripeConnect = useStripeConnect(true);
 
+  // 2FA state
+  const [twoFactorSecret, setTwoFactorSecret] = useState('');
+  const [twoFactorQrCode, setTwoFactorQrCode] = useState('');
+  const [twoFactorToken, setTwoFactorToken] = useState('');
+  const [twoFactorLoading, setTwoFactorLoading] = useState(false);
+  const [twoFactorError, setTwoFactorError] = useState('');
+  const [twoFactorSuccess, setTwoFactorSuccess] = useState(false);
+  const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false);
+
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -124,7 +133,8 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
   const tabs: Array<{ id: SettingsTab; label: string; icon: React.ElementType }> = [
     { id: 'general', label: 'General', icon: UserIcon },
     { id: 'account', label: 'Account', icon: Mail },
-    { id: 'privacy', label: 'Privacy', icon: Shield },
+    { id: 'security', label: 'Security', icon: Shield },
+    { id: 'privacy', label: 'Privacy', icon: Monitor },
     { id: 'payment', label: 'Payment', icon: CreditCard }
   ];
 
@@ -298,6 +308,76 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
       setPasswordError(err.message);
     } finally {
       setPasswordLoading(false);
+    }
+  };
+
+  const handleGenerateTwoFactorSecret = async () => {
+    setTwoFactorLoading(true);
+    setTwoFactorError('');
+    try {
+      const res = await fetch('/api/auth/2fa/generate-secret', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to generate 2FA secret');
+      }
+      setTwoFactorSecret(data.secret);
+      setTwoFactorQrCode(data.qrCodeUri);
+      setShowTwoFactorSetup(true);
+    } catch (err: any) {
+      setTwoFactorError(err.message);
+    } finally {
+      setTwoFactorLoading(false);
+    }
+  };
+
+  const handleEnableTwoFactor = async () => {
+    if (!twoFactorToken || twoFactorToken.length !== 6) {
+      setTwoFactorError('Please enter a valid 6-digit code');
+      return;
+    }
+
+    setTwoFactorLoading(true);
+    setTwoFactorError('');
+    try {
+      const res = await fetch('/api/auth/2fa/enable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: twoFactorSecret, token: twoFactorToken })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to enable 2FA');
+      }
+      onUserUpdate(data.user);
+      setTwoFactorSuccess(true);
+      setShowTwoFactorSetup(false);
+      setTwoFactorSecret('');
+      setTwoFactorQrCode('');
+      setTwoFactorToken('');
+      setTimeout(() => setTwoFactorSuccess(false), 4000);
+    } catch (err: any) {
+      setTwoFactorError(err.message);
+    } finally {
+      setTwoFactorLoading(false);
+    }
+  };
+
+  const handleDisableTwoFactor = async () => {
+    setTwoFactorLoading(true);
+    setTwoFactorError('');
+    try {
+      const res = await fetch('/api/auth/2fa/disable', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to disable 2FA');
+      }
+      onUserUpdate(data.user);
+      setTwoFactorSuccess(true);
+      setTimeout(() => setTwoFactorSuccess(false), 4000);
+    } catch (err: any) {
+      setTwoFactorError(err.message);
+    } finally {
+      setTwoFactorLoading(false);
     }
   };
 
@@ -643,6 +723,111 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {activeTab === 'security' && (
+            <div className="space-y-6">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 lg:p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
+                  <Shield className="w-5 h-5 text-blue-600" />
+                  <h2 className="font-bold text-slate-950">Two-Factor Authentication</h2>
+                </div>
+
+                {twoFactorError && (
+                  <div className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-sm text-rose-700">
+                    {twoFactorError}
+                  </div>
+                )}
+
+                {twoFactorSuccess && (
+                  <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-sm text-emerald-700">
+                    {user.twoFactorEnabled ? '2FA disabled successfully' : '2FA enabled successfully'}
+                  </div>
+                )}
+
+                {!user.twoFactorEnabled && !showTwoFactorSetup && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-slate-600">
+                      Add an extra layer of security to your account by enabling two-factor authentication with an authenticator app like Google Authenticator or Authy.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleGenerateTwoFactorSecret}
+                      disabled={twoFactorLoading}
+                      className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
+                    >
+                      {twoFactorLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Enable 2FA'}
+                    </button>
+                  </div>
+                )}
+
+                {showTwoFactorSetup && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-slate-600">
+                      Scan the QR code below with your authenticator app, then enter the 6-digit code to verify.
+                    </p>
+                    {twoFactorQrCode && (
+                      <div className="flex justify-center p-4 bg-white border border-slate-200 rounded-xl">
+                        <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(twoFactorQrCode)}`} alt="2FA QR Code" className="w-48 h-48" />
+                      </div>
+                    )}
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                        Enter 6-digit code
+                      </label>
+                      <input
+                        type="text"
+                        value={twoFactorToken}
+                        onChange={(e) => setTwoFactorToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="000000"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm font-mono tracking-widest text-center"
+                        maxLength={6}
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowTwoFactorSetup(false);
+                          setTwoFactorSecret('');
+                          setTwoFactorQrCode('');
+                          setTwoFactorToken('');
+                        }}
+                        disabled={twoFactorLoading}
+                        className="flex-1 sm:flex-none px-5 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold rounded-xl text-sm transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleEnableTwoFactor}
+                        disabled={twoFactorLoading}
+                        className="flex-1 sm:flex-none px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
+                      >
+                        {twoFactorLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify & Enable'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {user.twoFactorEnabled && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                      <CheckCircle className="w-5 h-5 text-emerald-600" />
+                      <span className="text-sm text-emerald-700 font-medium">2FA is currently enabled</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDisableTwoFactor}
+                      disabled={twoFactorLoading}
+                      className="w-full sm:w-auto px-5 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {twoFactorLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Disable 2FA'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

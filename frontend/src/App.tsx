@@ -115,6 +115,15 @@ export default function App() {
     fetchCurriculum();
   }, [user]);
 
+  // Auto-refresh curriculum every 30 seconds to catch admin updates
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      fetchCurriculum();
+    }, 30000); // 30 seconds
+    return () => clearInterval(interval);
+  }, [user]);
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });

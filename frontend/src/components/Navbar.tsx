@@ -107,17 +107,19 @@ export default function Navbar({ user, activeSection, isSidebarCollapsed, onTogg
                 </div>
               </div>
 
-              {/* Balances */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
-                <div className="bg-slate-900/40 p-2 rounded-xl text-center">
-                  <span className="text-[10px] uppercase font-mono text-slate-500 block">Points</span>
-                  <span className="font-bold font-mono text-blue-400 text-sm mt-0.5 block">{user.pointsBalance} XP</span>
+              {/* Balances - only for students */}
+              {user.role === 'student' && (
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+                  <div className="bg-slate-900/40 p-2 rounded-xl text-center">
+                    <span className="text-[10px] uppercase font-mono text-slate-500 block">Points</span>
+                    <span className="font-bold font-mono text-blue-400 text-sm mt-0.5 block">{user.pointsBalance} XP</span>
+                  </div>
+                  <div className="bg-slate-900/40 p-2 rounded-xl text-center">
+                    <span className="text-[10px] uppercase font-mono text-slate-500 block">Rewards</span>
+                    <span className="font-bold font-mono text-amber-400 text-sm mt-0.5 block">${user.claimableBalance}</span>
+                  </div>
                 </div>
-                <div className="bg-slate-900/40 p-2 rounded-xl text-center">
-                  <span className="text-[10px] uppercase font-mono text-slate-500 block">Rewards</span>
-                  <span className="font-bold font-mono text-amber-400 text-sm mt-0.5 block">${user.claimableBalance}</span>
-                </div>
-              </div>
+              )}
             </div>
           )}
 
