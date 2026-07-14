@@ -74,7 +74,7 @@ export default function App() {
           setUser(data.user);
           const params = new URLSearchParams(window.location.search);
           if (data.user.role === 'admin') {
-            setActiveSection('admin');
+            setActiveSection('dashboard');
           } else if (params.get('settings') === 'payment') {
             setActiveSection('settings');
           }
@@ -146,7 +146,7 @@ export default function App() {
     return <AuthView onAuthSuccess={(authenticatedUser) => {
       setUser(authenticatedUser);
       if (authenticatedUser.role === 'admin') {
-        setActiveSection('admin');
+        setActiveSection('dashboard');
       } else {
         setActiveSection('dashboard');
       }
