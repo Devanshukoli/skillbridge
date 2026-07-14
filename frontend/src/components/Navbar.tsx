@@ -32,7 +32,8 @@ export default function Navbar({ user, activeSection, isSidebarCollapsed, onTogg
     { id: 'dashboard', label: 'Dashboard', icon: Server },
     { id: 'tracks', label: 'Tracks CMS', icon: Layers },
     { id: 'submissions', label: 'Submissions', icon: ClipboardList },
-    { id: 'settings', label: 'User Mgt', icon: Settings },
+    { id: 'user-management', label: 'User Mgt', icon: Settings },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ] : [
     { id: 'dashboard', label: 'Dashboard', icon: Server },
     { id: 'curriculum', label: 'Curriculum', icon: BookOpen },

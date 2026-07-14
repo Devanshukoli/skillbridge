@@ -1,243 +1,237 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Check, Loader2, Monitor, Moon, Save, Settings, Sun, User as UserIcon } from 'lucide-react';
+import { avatarPresets } from '../avatarPresets';
 import { User } from '../types';
-import { Settings, Edit, UserX, UserCheck, Key, CheckCircle, Search, Save, X, Loader2 } from 'lucide-react';
-import { AdminSettingsSkeleton } from './Skeleton';
 
 interface Props {
   user: User;
   onUserUpdate: (user: User) => void;
 }
 
-export default function AdminSettingsView({ user }: Props) {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  
-  // Edit form state
-  const [editName, setEditName] = useState('');
-  const [editPassword, setEditPassword] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
+type AppearanceMode = 'system' | 'dark' | 'light';
 
-  const fetchUsers = async () => {
+const appearanceOptions: Array<{ value: AppearanceMode; label: string; icon: React.ElementType }> = [
+  { value: 'system', label: 'System', icon: Monitor },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'light', label: 'Light', icon: Sun }
+];
+
+export default function AdminSettingsView({ user, onUserUpdate }: Props) {
+  const [name, setName] = useState(user.name);
+  const [avatarId, setAvatarId] = useState(user.profile.avatarId || avatarPresets[0].id);
+  const [appearance, setAppearance] = useState<AppearanceMode>(user.profile.appearance || 'system');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    setName(user.name);
+    setAvatarId(user.profile.avatarId || avatarPresets[0].id);
+    setAppearance(user.profile.appearance || 'system');
+  }, [user]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const applyThemePreview = () => {
+      const resolvedTheme = appearance === 'system'
+        ? (mediaQuery.matches ? 'dark' : 'light')
+        : appearance;
+
+      document.documentElement.dataset.theme = resolvedTheme;
+    };
+
+    applyThemePreview();
+
+    if (appearance === 'system') {
+      mediaQuery.addEventListener('change', applyThemePreview);
+      return () => mediaQuery.removeEventListener('change', applyThemePreview);
+    }
+  }, [appearance]);
+
+  const buildProfilePayload = () => ({
+    name: name.trim(),
+    avatarId,
+    appearance,
+    bio: user.profile.bio || '',
+    currentRole: user.profile.currentRole || '',
+    githubUrl: user.profile.githubUrl || '',
+    linkedinUrl: user.profile.linkedinUrl || '',
+    portfolioUrl: user.profile.portfolioUrl || '',
+    resumeUrl: user.profile.resumeUrl || '',
+    skills: user.profile.skills || [],
+    experienceLevel: user.profile.experienceLevel || '',
+    goals: user.profile.goals || '',
+    timeCommitment: user.profile.timeCommitment || '',
+    country: user.profile.country || '',
+    privacy: user.profile.privacy || {
+      publicProfile: true,
+      showExternalLinks: true,
+      showProgressBadges: true
+    }
+  });
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name.trim()) {
+      setError('Full name is required.');
+      return;
+    }
+
     setLoading(true);
+    setError('');
+    setSuccess(false);
+
     try {
-      const res = await fetch('/api/admin/users');
-      if (res.ok) {
-        setUsers(await res.json());
+      const res = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildProfilePayload())
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update settings');
       }
-    } catch (err) {
-      console.error(err);
+
+      onUserUpdate(data.user);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const handleToggleBlock = async (targetUser: User) => {
-    const newStatus = targetUser.status === 'blocked' ? 'active' : 'blocked';
-    try {
-      const res = await fetch(`/api/admin/users/${targetUser.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
-      if (res.ok) {
-        fetchUsers();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleEditClick = (u: User) => {
-    setEditingUser(u);
-    setEditName(u.name);
-    setEditPassword('');
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingUser) return;
-    setIsSaving(true);
-    try {
-      const payload: any = { name: editName };
-      if (editPassword.trim()) {
-        payload.newPassword = editPassword.trim();
-      }
-      
-      const res = await fetch(`/api/admin/users/${editingUser.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        setEditingUser(null);
-        fetchUsers();
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (loading) {
-    return <AdminSettingsSkeleton />;
-  }
-
   return (
-    <div className="space-y-8 animate-fade-in text-slate-800 max-w-5xl mx-auto">
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col items-start shadow-sm">
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-          <Settings className="text-purple-500 w-6 h-6"/> User Management
-        </h1>
-        <p className="text-slate-500 text-sm mt-1">Edit user details, reset passwords, or block accounts.</p>
+    <div className="max-w-6xl mx-auto animate-fade-in text-slate-800 space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-extrabold text-slate-950 tracking-tight">Settings</h1>
+        <p className="text-sm text-slate-500">Manage your admin profile and workspace preferences.</p>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-200 bg-slate-50">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"/>
-            <input 
-              type="text" 
-              placeholder="Search users..." 
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-500"
-            />
-          </div>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
+        <aside className="bg-white border border-slate-200 rounded-2xl p-2 h-max shadow-sm">
+          <button
+            type="button"
+            className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm transition-all cursor-pointer bg-blue-50 text-blue-700 font-bold"
+          >
+            <span className="flex items-center gap-2">
+              <UserIcon className="w-4 h-4" />
+              General
+            </span>
+          </button>
+        </aside>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-mono text-[10px] tracking-wider">
-                <th className="p-4 font-semibold">User</th>
-                <th className="p-4 font-semibold">Role & Status</th>
-                <th className="p-4 font-semibold">Joined</th>
-                <th className="p-4 text-right font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredUsers.map(u => (
-                <tr key={u.id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="p-4">
-                    <div className="font-bold text-slate-900">{u.name}</div>
-                    <div className="text-xs text-slate-500 font-mono">{u.email}</div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex gap-2">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 border border-slate-200 text-slate-600">
-                        {u.role}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
-                        u.status === 'blocked' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                      }`}>
-                        {u.status || 'active'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-slate-500 text-xs">
-                    {new Date(u.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => handleEditClick(u)}
-                        className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200 cursor-pointer"
-                        title="Edit User"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      {u.id !== user.id && (
-                        <button 
-                          onClick={() => handleToggleBlock(u)}
-                          className={`p-1.5 rounded-lg transition-colors border cursor-pointer ${
-                            u.status === 'blocked' 
-                              ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border-emerald-200'
-                              : 'text-rose-600 bg-rose-50 hover:bg-rose-100 border-rose-200'
-                          }`}
-                          title={u.status === 'blocked' ? 'Unblock User' : 'Block User'}
-                        >
-                          {u.status === 'blocked' ? <UserCheck className="w-4 h-4"/> : <UserX className="w-4 h-4"/>}
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredUsers.length === 0 && !loading && (
-                <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-500 text-sm">No users found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Edit Modal */}
-      {editingUser && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                <Edit className="w-4 h-4 text-blue-500"/> Edit User
-              </h3>
-              <button onClick={() => setEditingUser(null)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5"/>
-              </button>
+        <section className="min-w-0">
+          {error && (
+            <div className="mb-4 p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-sm shadow-sm">
+              {error}
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Name</label>
-                <input 
-                  type="text" 
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500"
-                />
+          )}
+
+          {success && (
+            <div className="mb-4 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-700 text-sm flex items-center gap-2 shadow-sm">
+              <Check className="w-4 h-4" />
+              <span>Settings saved.</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSave} className="space-y-6">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 lg:p-6 shadow-sm">
+              <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
+                <Settings className="w-5 h-5 text-blue-600" />
+                <h2 className="font-bold text-slate-950">General</h2>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">Reset Password (leave blank to keep current)</label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"/>
-                  <input 
-                    type="password" 
-                    value={editPassword}
-                    onChange={e => setEditPassword(e.target.value)}
-                    placeholder="New password..."
-                    className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500"
+
+              <div className="mt-5 space-y-5">
+                <div className="space-y-3">
+                  <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                    Avatar
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {avatarPresets.map((avatar) => {
+                      const isSelected = avatarId === avatar.id;
+
+                      return (
+                        <button
+                          key={avatar.id}
+                          type="button"
+                          onClick={() => setAvatarId(avatar.id)}
+                          className={`relative w-16 h-16 rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${
+                            isSelected ? 'border-blue-600 ring-4 ring-blue-100' : 'border-slate-200 hover:border-slate-300'
+                          }`}
+                          title={avatar.label}
+                        >
+                          <img src={avatar.src} alt={avatar.label} className="w-full h-full object-cover" />
+                          {isSelected && (
+                            <span className="absolute bottom-1 right-1 bg-blue-600 text-white rounded-full p-0.5">
+                              <Check className="w-3 h-3" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-blue-500 text-sm focus:bg-white transition-colors"
                   />
+                </div>
+
+                <div className="space-y-3">
+                  <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                    Appearance
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {appearanceOptions.map((option) => {
+                      const Icon = option.icon;
+                      const isSelected = appearance === option.value;
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setAppearance(option.value)}
+                          className={`flex items-center justify-center gap-2 px-4 py-3 border rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-blue-50 border-blue-200 text-blue-700 ring-4 ring-blue-50'
+                              : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span>{option.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
-              <button 
-                onClick={() => setEditingUser(null)}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-xl text-sm font-semibold transition-colors"
-              >
-                Cancel
-              </button>
+
+            <div className="flex justify-end">
               <button
-                onClick={handleSaveEdit}
-                disabled={isSaving}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50"
+                type="submit"
+                disabled={loading}
+                className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/10 cursor-pointer"
               >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4"/>Save Changes</>}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /><span>Save Settings</span></>}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </form>
+        </section>
+      </div>
     </div>
   );
 }

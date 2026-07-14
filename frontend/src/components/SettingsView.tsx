@@ -3,6 +3,7 @@ import { ManualPayoutDetails, User } from '../types';
 import { avatarPresets } from '../avatarPresets';
 import { useStripeConnect } from '../hooks/useStripeConnect';
 import {
+  AlertTriangle,
   Award,
   BriefcaseBusiness,
   Check,
@@ -110,6 +111,14 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
   const [twoFactorError, setTwoFactorError] = useState('');
   const [twoFactorSuccess, setTwoFactorSuccess] = useState(false);
   const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(Boolean(user.twoFactorEnabled));
+  const [showDisableTwoFactorModal, setShowDisableTwoFactorModal] = useState(false);
+  const [disableTwoFactorError, setDisableTwoFactorError] = useState('');
+  const [twoFactorToast, setTwoFactorToast] = useState('');
+
+  useEffect(() => {
+    setTwoFactorEnabled(Boolean(user.twoFactorEnabled));
+  }, [user.twoFactorEnabled]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -314,6 +323,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
   const handleGenerateTwoFactorSecret = async () => {
     setTwoFactorLoading(true);
     setTwoFactorError('');
+    setTwoFactorSuccess(false);
     try {
       const res = await fetch('/api/auth/2fa/generate-secret', { method: 'POST' });
       const data = await res.json();
@@ -349,6 +359,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
         throw new Error(data.error || 'Failed to enable 2FA');
       }
       onUserUpdate(data.user);
+      setTwoFactorEnabled(true);
       setTwoFactorSuccess(true);
       setShowTwoFactorSetup(false);
       setTwoFactorSecret('');
@@ -362,20 +373,32 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
     }
   };
 
-  const handleDisableTwoFactor = async () => {
+  const handleDisableTwoFactor = async (password: string, token: string) => {
     setTwoFactorLoading(true);
     setTwoFactorError('');
+    setDisableTwoFactorError('');
     try {
-      const res = await fetch('/api/auth/2fa/disable', { method: 'POST' });
+      const res = await fetch('/api/auth/2fa/disable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, token })
+      });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to disable 2FA');
       }
       onUserUpdate(data.user);
-      setTwoFactorSuccess(true);
-      setTimeout(() => setTwoFactorSuccess(false), 4000);
+      setTwoFactorEnabled(false);
+      setShowDisableTwoFactorModal(false);
+      setTwoFactorSuccess(false);
+      setTwoFactorToast('Two-factor authentication has been disabled');
+      console.log('Stub email notification:', {
+        to: data.user?.email || user.email,
+        subject: '2FA was disabled on your account'
+      });
+      setTimeout(() => setTwoFactorToast(''), 4000);
     } catch (err: any) {
-      setTwoFactorError(err.message);
+      setDisableTwoFactorError(err.message);
     } finally {
       setTwoFactorLoading(false);
     }
@@ -390,6 +413,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
   const paymentReadinessLabel = stripeConnect.paymentStatus?.ready ? 'Ready' : 'Needs setup';
 
   return (
+    <>
     <div className="max-w-6xl mx-auto animate-fade-in text-slate-800 space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-extrabold text-slate-950 tracking-tight">Settings</h1>
@@ -742,11 +766,11 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
 
                 {twoFactorSuccess && (
                   <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50 text-sm text-emerald-700">
-                    {user.twoFactorEnabled ? '2FA disabled successfully' : '2FA enabled successfully'}
+                    Two-factor authentication has been enabled
                   </div>
                 )}
 
-                {!user.twoFactorEnabled && !showTwoFactorSetup && (
+                {!twoFactorEnabled && !showTwoFactorSetup && (
                   <div className="space-y-4">
                     <p className="text-sm text-slate-600">
                       Add an extra layer of security to your account by enabling two-factor authentication with an authenticator app like Google Authenticator or Authy.
@@ -811,19 +835,29 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
                   </div>
                 )}
 
-                {user.twoFactorEnabled && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-                      <CheckCircle className="w-5 h-5 text-emerald-600" />
-                      <span className="text-sm text-emerald-700 font-medium">2FA is currently enabled</span>
+                {twoFactorEnabled && (
+                  <div className="space-y-5">
+                    <div className="space-y-2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                        Enabled
+                      </span>
+                      <p className="text-sm font-semibold text-slate-700">Protected via Authenticator App</p>
                     </div>
+                    <p className="text-sm sm:text-[15px] leading-6 text-slate-600">
+                      Two-factor authentication is currently active on your account. You'll be asked for a verification code from your authenticator app each time you sign in.
+                    </p>
                     <button
                       type="button"
-                      onClick={handleDisableTwoFactor}
+                      onClick={() => {
+                        setDisableTwoFactorError('');
+                        setTwoFactorSuccess(false);
+                        setShowDisableTwoFactorModal(true);
+                      }}
                       disabled={twoFactorLoading}
                       className="w-full sm:w-auto px-5 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      {twoFactorLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Disable 2FA'}
+                      Disable 2FA
                     </button>
                   </div>
                 )}
@@ -1020,6 +1054,132 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
             </div>
           )}
         </section>
+      </div>
+    </div>
+    {twoFactorToast && (
+      <div className="fixed bottom-6 right-6 z-50 max-w-sm rounded-xl border border-emerald-100 bg-white px-4 py-3 text-sm font-semibold text-emerald-700 shadow-lg">
+        {twoFactorToast}
+      </div>
+    )}
+    <DisableTwoFactorModal
+      open={showDisableTwoFactorModal}
+      loading={twoFactorLoading}
+      error={disableTwoFactorError}
+      onClose={() => {
+        if (!twoFactorLoading) {
+          setShowDisableTwoFactorModal(false);
+          setDisableTwoFactorError('');
+        }
+      }}
+      onConfirm={handleDisableTwoFactor}
+    />
+    </>
+  );
+}
+
+interface DisableTwoFactorModalProps {
+  open: boolean;
+  loading: boolean;
+  error: string;
+  onClose: () => void;
+  onConfirm: (password: string, token: string) => void;
+}
+
+function DisableTwoFactorModal({ open, loading, error, onClose, onConfirm }: DisableTwoFactorModalProps) {
+  const [password, setPassword] = useState('');
+  const [token, setToken] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setPassword('');
+      setToken('');
+    }
+  }, [open]);
+
+  if (!open) {
+    return null;
+  }
+
+  const canSubmit = password.trim().length > 0 && token.length === 6 && !loading;
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 px-4 py-6">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-950">Disable Two-Factor Authentication?</h3>
+            <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 p-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+              <p className="text-sm leading-6 text-amber-800">
+                This will remove the extra layer of security from your account. You'll only need your password to sign in.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed"
+            aria-label="Close disable 2FA dialog"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-5 space-y-4">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+              Confirm your password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
+              autoComplete="current-password"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+              Enter current 2FA code
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={token}
+              onChange={(e) => setToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="000000"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-center font-mono text-sm tracking-widest text-slate-900 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
+              maxLength={6}
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed sm:w-auto cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(password, token)}
+            disabled={!canSubmit}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-rose-500/10 transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300 sm:w-auto cursor-pointer"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Disable 2FA'}
+          </button>
+        </div>
       </div>
     </div>
   );
