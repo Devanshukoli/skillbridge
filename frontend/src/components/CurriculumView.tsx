@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { User, Track, Module, Lesson, Project, Submission, Progress } from '../types';
 import MarkdownRenderer from './MarkdownRenderer';
 import {
@@ -13,7 +15,9 @@ import {
   ThumbsUp,
   Sparkles,
   PlayCircle,
-  Loader2
+  Loader2,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { CurriculumSkeleton } from './Skeleton';
 
@@ -54,6 +58,32 @@ export default function CurriculumView({
   const [activeModuleId, setActiveModuleId] = useState<string>('');
   const [completing, setCompleting] = useState(false);
   const [completionSuccess, setCompletionSuccess] = useState(false);
+  const [isEnlarged, setIsEnlarged] = useState(false);
+
+  // Collapse back to the inline reader whenever the selected lesson changes,
+  // so switching lessons never leaves you stuck in fullscreen by accident.
+  useEffect(() => {
+    setIsEnlarged(false);
+  }, [selectedLessonId]);
+
+  // Escape key closes the enlarged reader, and we lock body scroll while
+  // it's open so the page behind the overlay doesn't scroll along with it.
+  useEffect(() => {
+    if (!isEnlarged) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsEnlarged(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isEnlarged]);
 
   // Set initial track and module selection when curriculum loads
   useEffect(() => {
@@ -156,6 +186,100 @@ export default function CurriculumView({
     const prevLessons = curriculum.lessons.filter(l => l.moduleId === prevMod.id);
     const completedPrev = prevLessons.some(l => isCompleted(l.id));
     return !completedPrev;
+  };
+
+  // Shared markup for the reader card, used for both the inline (in-grid) and
+  // enlarged (fullscreen overlay) states so we don't maintain two copies of
+  // the header/body/footer. `enlarged` only toggles the icon + a couple of
+  // spacing tweaks — the layoutId below is what does the actual animation work.
+  const renderReaderPanel = (enlarged: boolean) => {
+    if (!activeLesson) return null;
+    return (
+      <>
+        {/* Reader Header */}
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50 sticky top-0 z-10 rounded-t-2xl">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setSelectedLessonId(null)}
+              className="p-1.5 bg-white text-slate-500 hover:text-slate-800 rounded-xl border border-slate-200 lg:hidden"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-mono text-blue-600 uppercase tracking-wider font-semibold">
+                Lesson Reader
+              </span>
+              <h3 className="font-bold text-slate-900 text-base leading-snug">{activeLesson.title}</h3>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2.5">
+            {isCompleted(activeLesson.id) ? (
+              <div className="bg-emerald-50 border border-emerald-100 text-emerald-700 px-3.5 py-1.5 rounded-full text-xs font-bold font-mono flex items-center space-x-1.5 shadow-sm">
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+                <span>Syllabus Completed</span>
+              </div>
+            ) : (
+              <div className="bg-blue-50 px-3 py-1.5 rounded-full text-xs font-semibold text-blue-600 font-mono border border-blue-100">
+                +20 XP Reward
+              </div>
+            )}
+            <button
+              onClick={() => setIsEnlarged(!enlarged)}
+              title={enlarged ? 'Exit fullscreen (Esc)' : 'Enlarge reader'}
+              className="p-2 bg-white text-slate-500 hover:text-blue-600 rounded-xl border border-slate-200 hover:border-blue-200 transition-colors cursor-pointer shadow-sm"
+            >
+              {enlarged ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Reader Scroll Area */}
+        <div className="p-8 overflow-y-auto flex-1 space-y-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+          <div className="prose prose-slate max-w-none">
+            <MarkdownRenderer content={activeLesson.content} />
+          </div>
+        </div>
+
+        {/* Reader Footer Control */}
+        <div className="p-6 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex items-center justify-between">
+          <button
+            onClick={() => setSelectedLessonId(null)}
+            className="hidden lg:block text-xs font-semibold text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200 transition-all shadow-sm cursor-pointer"
+          >
+            Close Reader
+          </button>
+
+          {isCompleted(activeLesson.id) ? (
+            <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-center flex items-center space-x-2 text-emerald-700 text-xs w-full lg:w-auto">
+              <ThumbsUp className="w-4 h-4 text-emerald-600" />
+              <span>You finished reading this lesson! Continue below or browse projects.</span>
+            </div>
+          ) : (
+            <button
+              id="complete-lesson-btn"
+              disabled={completing || completionSuccess}
+              onClick={handleCompleteLesson}
+              className="w-full lg:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center space-x-2 shadow-sm shadow-blue-500/10 cursor-pointer"
+            >
+              {completionSuccess ? (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Earned 20 XP!</span>
+                </>
+              ) : completing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <span>Mark Complete & Earn 20 XP</span>
+                  <Award className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </>
+    );
   };
 
   return (
@@ -324,83 +448,58 @@ export default function CurriculumView({
       {/* RIGHT COLUMN: Active Lesson Reader */}
       <div className={`lg:col-span-7 ${!activeLesson ? 'hidden lg:block' : 'block'}`}>
         {activeLesson ? (
-          <div className="bg-white border border-slate-200 rounded-2xl flex flex-col h-[calc(100vh-10rem)] shadow-md">
-            
-            {/* Reader Header */}
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50 sticky top-0 z-10 rounded-t-2xl">
-              <div className="flex items-center space-x-3">
-                <button 
-                  onClick={() => setSelectedLessonId(null)}
-                  className="p-1.5 bg-white text-slate-500 hover:text-slate-800 rounded-xl border border-slate-200 lg:hidden"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </button>
-                <div className="space-y-0.5">
-                  <span className="text-[10px] font-mono text-blue-600 uppercase tracking-wider font-semibold">
-                    Lesson Reader
-                  </span>
-                  <h3 className="font-bold text-slate-900 text-base leading-snug">{activeLesson.title}</h3>
-                </div>
-              </div>
-
-              {isCompleted(activeLesson.id) ? (
-                <div className="bg-emerald-50 border border-emerald-100 text-emerald-700 px-3.5 py-1.5 rounded-full text-xs font-bold font-mono flex items-center space-x-1.5 shadow-sm">
-                  <CheckCircle className="w-4 h-4 text-emerald-600" />
-                  <span>Syllabus Completed</span>
-                </div>
-              ) : (
-                <div className="bg-blue-50 px-3 py-1.5 rounded-full text-xs font-semibold text-blue-600 font-mono border border-blue-100">
-                  +20 XP Reward
-                </div>
-              )}
-            </div>
-
-            {/* Reader Scroll Area */}
-            <div className="p-8 overflow-y-auto flex-1 space-y-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-              <div className="prose prose-slate max-w-none">
-                <MarkdownRenderer content={activeLesson.content} />
-              </div>
-            </div>
-
-            {/* Reader Footer Control */}
-            <div className="p-6 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex items-center justify-between">
-              <button
-                onClick={() => setSelectedLessonId(null)}
-                className="hidden lg:block text-xs font-semibold text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200 transition-all shadow-sm cursor-pointer"
+          <>
+            {/* Inline card — hidden (not unmounted-and-forgotten, just swapped)
+                while enlarged, so the layoutId below can animate from here. */}
+            {!isEnlarged && (
+              <motion.div
+                layoutId="lesson-reader-panel"
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="bg-white border border-slate-200 rounded-2xl flex flex-col h-[calc(100vh-10rem)] shadow-md overflow-hidden"
               >
-                Close Reader
-              </button>
+                {renderReaderPanel(false)}
+              </motion.div>
+            )}
 
-              {isCompleted(activeLesson.id) ? (
-                <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-center flex items-center space-x-2 text-emerald-700 text-xs w-full lg:w-auto">
-                  <ThumbsUp className="w-4 h-4 text-emerald-600" />
-                  <span>You finished reading this lesson! Continue below or browse projects.</span>
-                </div>
-              ) : (
-                <button
-                  id="complete-lesson-btn"
-                  disabled={completing || completionSuccess}
-                  onClick={handleCompleteLesson}
-                  className="w-full lg:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center space-x-2 shadow-sm shadow-blue-500/10 cursor-pointer"
-                >
-                  {completionSuccess ? (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      <span>Earned 20 XP!</span>
-                    </>
-                  ) : completing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <span>Mark Complete & Earn 20 XP</span>
-                      <Award className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-
-          </div>
+            {/* Enlarged overlay — rendered via a portal straight onto <body>.
+                This is the fix: our nearest positioned ancestor (the page's
+                `.animate-fade-in` wrapper) keeps a `transform` around after
+                its mount animation finishes (CSS fill-mode: forwards), and
+                ANY transform on an ancestor — even a no-op translateY(0) —
+                creates a new containing block for `position: fixed`
+                descendants. That silently turned our "fixed to the
+                viewport" overlay into "fixed to that div" instead, which is
+                why the backdrop only covered part of the screen and why
+                content got clipped by <main>'s own overflow-y-auto instead
+                of scrolling freely. Portaling to document.body sidesteps
+                the whole containing-block chain — the standard fix any
+                modal/dialog library uses for exactly this reason. */}
+            {createPortal(
+              <AnimatePresence>
+                {isEnlarged && (
+                  <>
+                    <motion.div
+                      key="lesson-reader-backdrop"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setIsEnlarged(false)}
+                      className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm"
+                    />
+                    <motion.div
+                      key="lesson-reader-expanded"
+                      layoutId="lesson-reader-panel"
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      className="fixed inset-4 sm:inset-8 lg:inset-16 z-[110] bg-white border border-slate-200 rounded-2xl flex flex-col shadow-2xl overflow-hidden"
+                    >
+                      {renderReaderPanel(true)}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>,
+              document.body
+            )}
+          </>
         ) : (
           /* Empty State */
           <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center flex flex-col items-center justify-center h-96 space-y-4 shadow-sm">

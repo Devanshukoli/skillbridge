@@ -215,7 +215,7 @@ export class AuthController {
         if (!user) {
           return res.json({ user: null });
         }
-        res.json({ user });
+        res.json({ user: toPublicUser(user) });
       } catch (err) {
         res.json({ user: null });
       }
