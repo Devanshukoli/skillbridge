@@ -1,3 +1,4 @@
+import { tracer } from "@/backend/observability/tracer";
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -109,36 +110,109 @@ export class AuthController {
 
   // Log in
   async login(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { email, password } = req.body;
+    return tracer.startActiveSpan("Login", async (span) => {
+      try {
+        const { email, password } = req.body;
 
-      if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password are required' });
+        span.setAttribute("auth.email", email ?? "");
+
+        if (!email || !password) {
+          span.setStatus({
+            code: 2,
+            message: "Missing credentials",
+          });
+
+          span.end();
+          return res.status(400).json({
+            error: "Email and password are required",
+          });
+        }
+
+        const normalizedEmail = email.toLowerCase();
+
+        const userLookup = await tracer.startActiveSpan(
+          "Find User",
+          async (childSpan) => {
+            const result = await authService.getUserByEmail(normalizedEmail);
+            childSpan.end();
+            return result;
+          }
+        );
+
+        if (!userLookup) {
+          span.setStatus({
+            code: 2,
+            message: "User not found",
+          });
+
+          span.end();
+
+          return res.status(400).json({
+            error: "Invalid email or password",
+          });
+        }
+
+        const { user, passwordHash } = userLookup;
+
+        const passwordMatches = await tracer.startActiveSpan(
+          "Verify Password",
+          async (childSpan) => {
+            const match = await bcrypt.compare(password, passwordHash);
+            childSpan.end();
+            return match;
+          }
+        );
+
+        if (!passwordMatches) {
+          span.setStatus({
+            code: 2,
+            message: "Invalid password",
+          });
+
+          span.end();
+
+          return res.status(400).json({
+            error: "Invalid email or password",
+          });
+        }
+
+        if (user.twoFactorEnabled) {
+          span.setAttribute("auth.2fa", true);
+
+          span.end();
+
+          return res.json({
+            requires2FA: true,
+            email: user.email,
+          });
+        }
+
+        await tracer.startActiveSpan("Generate Session", async (childSpan) => {
+          this.setSessionCookie(res, user);
+          childSpan.end();
+        });
+
+        span.setStatus({
+          code: 1,
+        });
+
+        span.end();
+
+        return res.json({
+          user: toPublicUser(user),
+        });
+      } catch (err) {
+        span.recordException(err as Error);
+
+        span.setStatus({
+          code: 2,
+        });
+
+        span.end();
+
+        next(err);
       }
-
-      const normalizedEmail = email.toLowerCase();
-      const data = await authService.getUserByEmail(normalizedEmail);
-
-      if (!data) {
-        return res.status(400).json({ error: 'Invalid email or password' });
-      }
-
-      const { user, passwordHash } = data;
-      const match = await bcrypt.compare(password, passwordHash);
-      if (!match) {
-        return res.status(400).json({ error: 'Invalid email or password' });
-      }
-
-      // Check if 2FA is enabled
-      if (user.twoFactorEnabled) {
-        return res.json({ requires2FA: true, email: user.email });
-      }
-
-      this.setSessionCookie(res, user);
-      res.json({ user: toPublicUser(user) });
-    } catch (err) {
-      next(err);
-    }
+    });
   }
 
   // Log out
