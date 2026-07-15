@@ -119,15 +119,19 @@ export default function CurriculumView({
     }
   }, [activeTrackId, curriculum.modules, activeModuleId]);
 
-  // Auto-expand module if the selected lesson is from a different module
+  // Auto-expand module if the selected lesson is from a different module.
+  // Deliberately NOT watching `activeModuleId` here — this effect should only
+  // react when `selectedLessonId` itself changes (e.g. a "continue lesson"
+  // deep link into another module). If it also depended on `activeModuleId`,
+  // it would re-fire every time the user manually clicked a module tab and
+  // immediately snap the selection back to the open lesson's module — which
+  // is exactly the "can't switch modules while a lesson is open" bug.
   useEffect(() => {
-    if (selectedLessonId) {
-      const activeLesson = curriculum.lessons.find((l) => l.id === selectedLessonId);
-      if (activeLesson && activeLesson.moduleId !== activeModuleId) {
-        setActiveModuleId(activeLesson.moduleId);
-      }
-    }
-  }, [selectedLessonId, activeModuleId, curriculum.lessons]);
+    if (!selectedLessonId) return;
+    const activeLesson = curriculum.lessons.find((l) => l.id === selectedLessonId);
+    if (!activeLesson) return;
+    setActiveModuleId((prev) => (activeLesson.moduleId !== prev ? activeLesson.moduleId : prev));
+  }, [selectedLessonId, curriculum.lessons]);
 
   if (curriculum.tracks.length === 0 && curriculum.modules.length === 0 && curriculum.lessons.length === 0) {
     return <CurriculumSkeleton />;
