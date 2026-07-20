@@ -138,6 +138,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
         <div className="bg-white border border-slate-200 rounded-2xl shadow-xl p-8 space-y-6">
           
           {/* Tabs */}
+          {!requiresTwoFactor && (
           <div className="grid grid-cols-2 p-1 bg-slate-50 rounded-xl border border-slate-200">
             <button
               id="auth-tab-login"
@@ -162,7 +163,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
               Register
             </button>
           </div>
-
+          )}
           {error && (
             <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-sm shadow-sm">
               {error}
