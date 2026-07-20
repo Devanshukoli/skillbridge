@@ -1,4 +1,4 @@
-import { tracer } from "@/backend/observability/tracer";
+import { traceSpan } from "@/backend/observability/trace";
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -110,19 +110,14 @@ export class AuthController {
 
   // Log in
   async login(req: Request, res: Response, next: NextFunction) {
-    return tracer.startActiveSpan("Login", async (span) => {
-      try {
+    return traceSpan(
+      "Login",
+      async (span) => {
         const { email, password } = req.body;
 
         span.setAttribute("auth.email", email ?? "");
 
         if (!email || !password) {
-          span.setStatus({
-            code: 2,
-            message: "Missing credentials",
-          });
-
-          span.end();
           return res.status(400).json({
             error: "Email and password are required",
           });
@@ -130,23 +125,11 @@ export class AuthController {
 
         const normalizedEmail = email.toLowerCase();
 
-        const userLookup = await tracer.startActiveSpan(
-          "Find User",
-          async (childSpan) => {
-            const result = await authService.getUserByEmail(normalizedEmail);
-            childSpan.end();
-            return result;
-          }
-        );
+        const userLookup = await traceSpan("Find User", async () => {
+          return authService.getUserByEmail(normalizedEmail);
+        });
 
         if (!userLookup) {
-          span.setStatus({
-            code: 2,
-            message: "User not found",
-          });
-
-          span.end();
-
           return res.status(400).json({
             error: "Invalid email or password",
           });
@@ -154,23 +137,14 @@ export class AuthController {
 
         const { user, passwordHash } = userLookup;
 
-        const passwordMatches = await tracer.startActiveSpan(
+        const passwordMatches = await traceSpan(
           "Verify Password",
-          async (childSpan) => {
-            const match = await bcrypt.compare(password, passwordHash);
-            childSpan.end();
-            return match;
+          async () => {
+            return bcrypt.compare(password, passwordHash);
           }
         );
 
         if (!passwordMatches) {
-          span.setStatus({
-            code: 2,
-            message: "Invalid password",
-          });
-
-          span.end();
-
           return res.status(400).json({
             error: "Invalid email or password",
           });
@@ -179,40 +153,26 @@ export class AuthController {
         if (user.twoFactorEnabled) {
           span.setAttribute("auth.2fa", true);
 
-          span.end();
-
           return res.json({
             requires2FA: true,
             email: user.email,
           });
         }
 
-        await tracer.startActiveSpan("Generate Session", async (childSpan) => {
+        await traceSpan("Generate Session", async () => {
           this.setSessionCookie(res, user);
-          childSpan.end();
         });
-
-        span.setStatus({
-          code: 1,
-        });
-
-        span.end();
 
         return res.json({
           user: toPublicUser(user),
         });
-      } catch (err) {
-        span.recordException(err as Error);
-
-        span.setStatus({
-          code: 2,
-        });
-
-        span.end();
-
-        next(err);
+      },
+      {
+        attributes: {
+          "auth.provider": "email",
+        },
       }
-    });
+    ).catch(next);
   }
 
   // Log out

@@ -256,12 +256,21 @@ export async function supabaseGetAllUsers(): Promise<User[]> {
 // Curriculum Operations
 export async function supabaseGetCurriculum(userId: string): Promise<any | null> {
   const supabase = getSupabaseClient();
-  const { data: tracks } = await supabase.from('skillbridge_tracks').select('*');
-  const { data: rawModules } = await supabase.from('skillbridge_modules').select('*').order('order', { ascending: true });
-  const { data: rawLessons } = await supabase.from('skillbridge_lessons').select('*').order('order', { ascending: true });
-  const { data: rawProjects } = await supabase.from('skillbridge_projects').select('*');
-  const { data: progressData } = await supabase.from('skillbridge_progress').select('*').eq('user_id', userId);
-  const { data: submissionsData } = await supabase.from('skillbridge_submissions').select('*').eq('user_id', userId);
+  const [
+    { data: tracks },
+    { data: rawModules },
+    { data: rawLessons },
+    { data: rawProjects },
+    { data: progressData },
+    { data: submissionsData },
+  ] = await Promise.all([
+    supabase.from('skillbridge_tracks').select('*'),
+    supabase.from('skillbridge_modules').select('*').order('order', { ascending: true }),
+    supabase.from('skillbridge_lessons').select('*').order('order', { ascending: true }),
+    supabase.from('skillbridge_projects').select('*'),
+    supabase.from('skillbridge_progress').select('*').eq('user_id', userId),
+    supabase.from('skillbridge_submissions').select('*').eq('user_id', userId),
+  ]);
 
   const modules: Module[] = (rawModules || []).map(m => ({ id: m.id, trackId: m.track_id, title: m.title, order: m.order }));
   const lessons: Lesson[] = (rawLessons || []).map(l => ({ id: l.id, moduleId: l.module_id, title: l.title, order: l.order, estimatedMinutes: l.estimated_minutes, content: l.content }));
