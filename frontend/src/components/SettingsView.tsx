@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ManualPayoutDetails, User } from '../types';
 import { avatarPresets } from '../avatarPresets';
 import { useStripeConnect } from '../hooks/useStripeConnect';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   AlertTriangle,
   Award,
@@ -1103,6 +1104,8 @@ function DisableTwoFactorModal({ open, loading, error, hasPassword, onClose, onC
       setToken('');
     }
   }, [open]);
+
+  useEscapeKey(open && !loading, onClose);
 
   if (!open) {
     return null;

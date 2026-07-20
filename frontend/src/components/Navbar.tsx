@@ -15,6 +15,7 @@ import {
   Layers
 } from 'lucide-react';
 import { getAvatarPreset } from '../avatarPresets';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface NavbarProps {
   user: User;
@@ -27,6 +28,8 @@ interface NavbarProps {
 
 export default function Navbar({ user, activeSection, isSidebarCollapsed, onToggleSidebar, setActiveSection, onLogout }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEscapeKey(isOpen, () => setIsOpen(false));
 
   const menuItems = user.role === 'admin' ? [
     { id: 'dashboard', label: 'Dashboard', icon: Server },
