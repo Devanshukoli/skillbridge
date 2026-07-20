@@ -20,8 +20,19 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const authError = params.get('auth_error');
+    const requires2FAParam = params.get('requires2FA') === 'true' || params.get('requires2fa') === 'true';
+    const pendingEmail = params.get('email');
+
     if (authError) {
       setError(authError);
+    }
+
+    if (requires2FAParam && pendingEmail) {
+      setRequiresTwoFactor(true);
+      setTwoFactorEmail(pendingEmail);
+    }
+
+    if (authError || requires2FAParam) {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);

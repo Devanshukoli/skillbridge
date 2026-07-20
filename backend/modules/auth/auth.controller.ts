@@ -338,6 +338,17 @@ export class AuthController {
         });
       }
 
+      if (user.twoFactorEnabled && user.twoFactorSecret) {
+        const redirectParams = new URLSearchParams({
+          requires2FA: 'true',
+          email: user.email,
+          auth_provider: 'google'
+        });
+
+        res.append('Set-Cookie', 'skillbridge_oauth_state=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax');
+        return res.redirect(`${baseUrl}/?${redirectParams.toString()}`);
+      }
+
       this.setSessionCookie(res, user);
       res.append('Set-Cookie', 'skillbridge_oauth_state=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax');
       res.redirect(baseUrl);
