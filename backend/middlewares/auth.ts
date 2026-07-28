@@ -3,14 +3,18 @@ import jwt from 'jsonwebtoken';
 import { User } from '../../frontend/src/types';
 import { supabaseGetUserById } from '../server/supabase';
 
-export const JWT_SECRET = process.env.JWT_SECRET || 'skillbridge_secret_signature_key_2026';
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required in production');
+}
+
+export const JWT_SECRET = process.env.JWT_SECRET || '';
 
 // Helper to parse cookies manually from headers
 export function getCookies(req: Request): Record<string, string> {
   const cookies: Record<string, string> = {};
   const cookieHeader = req.headers.cookie;
   if (!cookieHeader) return cookies;
-  
+
   cookieHeader.split(';').forEach(cookie => {
     const parts = cookie.split('=');
     if (parts.length >= 2) {
@@ -38,7 +42,7 @@ export async function authenticate(req: AuthenticatedRequest, res: Response, nex
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string; role: string };
-    
+
     let user: User | null = null;
     user = await supabaseGetUserById(decoded.userId);
 
