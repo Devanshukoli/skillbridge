@@ -33,6 +33,25 @@ app.use('/api', claimsRouter);
 app.use('/api', paymentsRouter);
 app.use('/api/admin', adminRouter);
 
+// Serve llm.txt and llms.txt endpoints directly as text/plain
+const serveLlmTxt = (req: express.Request, res: express.Response) => {
+  const llmFilePath = path.join(process.cwd(), 'frontend', 'public', 'llm.txt');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.sendFile(llmFilePath, (err) => {
+    if (err) {
+      const fallbackPath = path.join(process.cwd(), 'dist', 'llm.txt');
+      res.sendFile(fallbackPath, (err2) => {
+        if (err2) {
+          res.status(404).send('# SkillBridge\n\nLLM documentation file.');
+        }
+      });
+    }
+  });
+};
+
+app.get('/llm.txt', serveLlmTxt);
+app.get('/llms.txt', serveLlmTxt);
+
 // Global Error Handling Middleware (must be registered after all routes)
 app.use(errorHandler);
 
