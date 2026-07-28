@@ -1,0 +1,24 @@
+id: proj-prac-2
+type: practice
+title: 'Practice: Add Pagination, Search, and Filtering'
+description: >-
+  Extend an existing API route to handle pagination query parameters (?page=1&limit=10), search
+  keywords (?search=query), and filter fields (?status=completed). In professional servers, we never
+  return entire tables at once—we paginated queries.
+requirements:
+  - Implement an endpoint GET /api/items which handles mock item lists (seed at least 25 items).
+  - Add search capabilities filtering by item titles matching user query (?q=keyword).
+  - 'Add pagination handling: query parameters `page` (default 1) and `limit` (default 5).'
+  - >-
+    In the response metadata, include pagination metrics: `page`, `limit`, `totalItems`, and
+    `totalPages`.
+  - Handle negative or non-integer parameter values safely by defaulting to standard values.
+rubric:
+  - 'Search compliance: Querying /api/items?q=apple accurately filters results.'
+  - 'Pagination metrics: Response metadata matches actual output arrays perfectly.'
+  - >-
+    Safety bounds: Requests for page -5 or limit 9999 are safely coerced to standard safety limits
+    (e.g. limit max 100).
+  - Clean Express handler structure.
+rewardPoints: 150
+rewardMoney: 0
