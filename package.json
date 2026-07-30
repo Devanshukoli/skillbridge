@@ -3,6 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "repository": {
+    "url": "https://github.com/Devanshukoli/skillbridge/",
+    "type": "git"
+  },
+  "author": {
+    "name": "Devanshu Koli"
+  },
   "scripts": {
     "dev": "tsx backend/server.ts",
     "build": "vite build && esbuild backend/server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
