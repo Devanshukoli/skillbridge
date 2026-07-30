@@ -375,29 +375,31 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
             {/* Legal Notice */}
             <p className="text-[10px] text-center text-slate-400 font-sans leading-normal pt-1">
               By continuing, you agree to SkillBridge's{' '}
-              <button
-                type="button"
-                onClick={() => {
+              <a
+                href="/terms-and-conditions"
+                onClick={(e) => {
+                  e.preventDefault();
                   setIsModalOpen(false);
-                  const el = document.querySelector('footer');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  window.history.pushState({}, '', '/terms-and-conditions');
+                  window.dispatchEvent(new Event('popstate'));
                 }}
                 className="text-slate-600 underline hover:text-slate-900 cursor-pointer"
               >
                 Terms of Service
-              </button>{' '}
+              </a>{' '}
               &{' '}
-              <button
-                type="button"
-                onClick={() => {
+              <a
+                href="/privacy-policy"
+                onClick={(e) => {
+                  e.preventDefault();
                   setIsModalOpen(false);
-                  const el = document.querySelector('footer');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  window.history.pushState({}, '', '/privacy-policy');
+                  window.dispatchEvent(new Event('popstate'));
                 }}
                 className="text-slate-600 underline hover:text-slate-900 cursor-pointer"
               >
                 Privacy Policy
-              </button>.
+              </a>.
             </p>
 
             {/* Quick Demo Credentials helper */}

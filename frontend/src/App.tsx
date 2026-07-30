@@ -13,6 +13,7 @@ import AdminDashboardView from './components/AdminDashboardView';
 import AdminTracksCMSView from './components/AdminTracksCMSView';
 import AdminSettingsView from './components/AdminSettingsView';
 import AdminUserManagementView from './components/AdminUserManagementView';
+import LegalView from './components/LegalView';
 import { Code } from 'lucide-react';
 import { AppShellSkeleton } from './components/Skeleton';
 
@@ -74,6 +75,15 @@ export default function App() {
 
   const [loadingSession, setLoadingSession] = useState(true);
   const [loadingCurriculum, setLoadingCurriculum] = useState(false);
+  const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const navigateToSection = (section: string, nextUser = user) => {
     setActiveSection(section);
@@ -177,7 +187,24 @@ export default function App() {
     }
   };
 
-  // 3. Render Session Boot Loading Screen
+  // 3. Render Legal Documentation Views if path matches privacy or terms
+  const normalizedPath = currentPath.toLowerCase();
+  const isPrivacyPath = normalizedPath === '/privacy-policy' || normalizedPath === '/privacy';
+  const isTermsPath = normalizedPath === '/terms-and-conditions' || normalizedPath === '/terms-of-service' || normalizedPath === '/terms' || normalizedPath === '/terms-and-condition';
+
+  if (isPrivacyPath || isTermsPath) {
+    return (
+      <LegalView 
+        initialDocument={isPrivacyPath ? 'privacy' : 'terms'} 
+        onNavigateHome={() => {
+          window.history.pushState({}, '', '/');
+          setCurrentPath('/');
+        }}
+      />
+    );
+  }
+
+  // 4. Render Session Boot Loading Screen
   if (loadingSession) {
     return <AppShellSkeleton />;
   }

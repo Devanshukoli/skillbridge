@@ -833,22 +833,30 @@ export default function LandingView({ onAuthSuccess, onRequestAuthModal }: Landi
                 <ul className="space-y-3 text-sm text-slate-400">
                   <li><a href="#reviews" className="hover:text-slate-200 transition-colors">About SkillBridge</a></li>
                   <li>
-                    <button 
-                      type="button" 
-                      onClick={() => setLegalModalTab('privacy')} 
+                    <a 
+                      href="/privacy-policy" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.history.pushState({}, '', '/privacy-policy');
+                        window.dispatchEvent(new Event('popstate'));
+                      }} 
                       className="hover:text-white transition-colors text-left cursor-pointer flex items-center space-x-1.5"
                     >
                       <span>Privacy Policy</span>
-                    </button>
+                    </a>
                   </li>
                   <li>
-                    <button 
-                      type="button" 
-                      onClick={() => setLegalModalTab('terms')} 
+                    <a 
+                      href="/terms-and-conditions" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.history.pushState({}, '', '/terms-and-conditions');
+                        window.dispatchEvent(new Event('popstate'));
+                      }} 
                       className="hover:text-white transition-colors text-left cursor-pointer flex items-center space-x-1.5"
                     >
                       <span>Terms of Service</span>
-                    </button>
+                    </a>
                   </li>
                   <li><a href="#reviews" className="hover:text-slate-200 transition-colors">Code of Conduct</a></li>
                 </ul>
@@ -867,21 +875,29 @@ export default function LandingView({ onAuthSuccess, onRequestAuthModal }: Landi
             </div>
 
             <div className="flex items-center space-x-6 text-slate-400">
-              <button
-                type="button"
-                onClick={() => setLegalModalTab('privacy')}
+              <a
+                href="/privacy-policy"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.history.pushState({}, '', '/privacy-policy');
+                  window.dispatchEvent(new Event('popstate'));
+                }}
                 className="hover:text-white transition-colors cursor-pointer"
               >
                 Privacy Policy
-              </button>
+              </a>
               <span className="text-slate-700">•</span>
-              <button
-                type="button"
-                onClick={() => setLegalModalTab('terms')}
+              <a
+                href="/terms-and-conditions"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.history.pushState({}, '', '/terms-and-conditions');
+                  window.dispatchEvent(new Event('popstate'));
+                }}
                 className="hover:text-white transition-colors cursor-pointer"
               >
                 Terms of Service
-              </button>
+              </a>
               <span className="text-slate-700">•</span>
               <a 
                 href="/llm.txt" 
