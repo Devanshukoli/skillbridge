@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Edit, Key, Loader2, Save, Search, Settings, UserCheck, UserX, X } from 'lucide-react';
 import { User } from '../types';
 import { AdminSettingsSkeleton } from './Skeleton';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface Props {
   user: User;
@@ -34,6 +35,8 @@ export default function AdminUserManagementView({ user }: Props) {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEscapeKey(!!editingUser && !isSaving, () => setEditingUser(null));
 
   const handleToggleBlock = async (targetUser: User) => {
     const newStatus = targetUser.status === 'blocked' ? 'active' : 'blocked';

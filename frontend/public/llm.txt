@@ -1,0 +1,53 @@
+# SkillBridge
+
+> SkillBridge bridges the gap between university computer science education and production software engineering. It provides structured, production-grade Backend Engineering and SQL Mastery tracks where students build real-world microservices, undergo senior staff engineer code reviews, and claim direct cash payouts via Stripe Connect Express. Founded to eliminate superficial tutorial hell and empower student developers with verifiable industry experience.
+
+## What SkillBridge does
+
+SkillBridge provides paid learning tracks and production code validation for aspiring software engineers. Students complete hands-on engineering modules, submit open-source GitHub repositories and live deployments, and receive rigorous line-by-line code reviews on error handling, database indexing, authentication security, and API idempotency. Upon approval by senior reviewers, students earn direct monetary rewards and verified certificates of completion.
+
+- Production-grade Backend Engineering & SQL Mastery tracks
+- Senior Staff Engineer code reviews with actionable feedback
+- Direct cash payout rewards ($20 - $50 per module) via Stripe Connect Express
+- Verified digital certificates for portfolio showcasing and resume building
+
+## Tracks & Curriculum
+
+- [Backend Engineering Track](https://skillbridge.dev/#curriculum): Master Node.js & Express architecture, stateless JWT & 2FA security, Stripe API integrations, and cloud deployment.
+- [SQL Mastery Track](https://skillbridge.dev/#curriculum): Master relational schema normalization, B-Tree & Hash indexing, complex CTEs, window functions, and high-cardinality query performance.
+- [Capstone Projects](https://skillbridge.dev/#curriculum): Full-stack production systems evaluated against enterprise security and performance standards.
+- [Leaderboard & XP](https://skillbridge.dev/#reward-engine): Earn XP points, climb global rankings, and showcase top achievements to hiring partners.
+
+## Results & Impact
+
+- $150,000+ in rewards awarded to student developers
+- 15,000+ verified backend & database projects reviewed
+- 98% capstone approval rating for student engineers transitioning into industry roles
+- 120+ hiring partner companies recognizing SkillBridge verified credentials
+
+## For Students & Developers
+
+- Earn while learning: Get paid up to $50 for completing production capstone projects.
+- Real-world experience: Replace toy applications with microservices, Stripe webhooks, and normalized SQL schemas.
+- Line-by-line feedback: Receive detailed code reviews from senior engineers at top tech companies.
+- Career advancement: Build an undeniable GitHub portfolio backed by verified industry badges.
+
+## For Hiring Partners & Enterprises
+
+- Pre-vetted talent: Access top-performing student engineers with proven ability to ship clean, tested production code.
+- Sponsorship & Custom Tracks: Partner with SkillBridge to create custom developer challenges tailored to your tech stack.
+- Hire with confidence: Review candidate code quality, review history, and verified track completion metrics.
+
+## Platform Features
+
+- [Curriculum](https://skillbridge.dev/#curriculum): Interactive syllabus with production specifications.
+- [Reward Engine](https://skillbridge.dev/#reward-engine): Earnings estimator and Stripe Connect payout system.
+- [Industry Reviews](https://skillbridge.dev/#reviews): Testimonials and standards from senior tech leads.
+- [Create Account](https://skillbridge.dev/register): Sign up to start your first coding track.
+
+## Social & Community
+
+- [GitHub](https://github.com/skillbridge)
+- [X / Twitter](https://x.com/SkillBridgeDev)
+- [LinkedIn](https://linkedin.com/company/skillbridge-dev)
+- [Discord](https://discord.gg/skillbridge)

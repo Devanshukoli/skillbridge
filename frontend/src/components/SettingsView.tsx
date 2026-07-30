@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ManualPayoutDetails, User } from '../types';
 import { avatarPresets } from '../avatarPresets';
 import { useStripeConnect } from '../hooks/useStripeConnect';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   AlertTriangle,
   Award,
@@ -1104,6 +1105,8 @@ function DisableTwoFactorModal({ open, loading, error, hasPassword, onClose, onC
     }
   }, [open]);
 
+  useEscapeKey(open && !loading, onClose);
+
   if (!open) {
     return null;
   }
@@ -1137,8 +1140,16 @@ function DisableTwoFactorModal({ open, loading, error, hasPassword, onClose, onC
         <div className="mt-5 space-y-4">
            {hasPassword && (
               <div className="space-y-1.5">
-                <label>Confirm your password</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                  Confirm your password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
+                />
               </div>
             )}
 

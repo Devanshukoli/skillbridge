@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, Track, Module, Lesson, Project, Submission, Progress } from '../types';
 import { useStripeConnect } from '../hooks/useStripeConnect';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   Award,
   DollarSign,
@@ -50,6 +51,9 @@ export default function DashboardView({
   const [claimSuccess, setClaimSuccess] = useState(false);
   const [stripeGate, setStripeGate] = useState<{ title: string; message: string; canConnect: boolean } | null>(null);
   const stripeConnect = useStripeConnect(false);
+
+  useEscapeKey(!!stripeGate && !stripeConnect.loading, () => setStripeGate(null));
+  useEscapeKey(claimModalOpen && !claimLoading, () => setClaimModalOpen(false));
 
   if (!curriculum || curriculum.tracks.length === 0 && curriculum.modules.length === 0 && curriculum.lessons.length === 0) {
     return <DashboardSkeleton />;
