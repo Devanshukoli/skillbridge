@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Code, 
   CheckCircle2, 
@@ -20,7 +21,10 @@ import {
   Users,
   Building2,
   TrendingUp,
-  X
+  X,
+  FileText,
+  Scale,
+  Globe
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -34,6 +38,7 @@ export default function LandingView({ onAuthSuccess, onRequestAuthModal }: Landi
   const [selectedModuleIndex, setSelectedModuleIndex] = useState<number>(0);
   const [calcCapstones, setCalcCapstones] = useState<number>(2);
   const [calcPractice, setCalcPractice] = useState<number>(3);
+  const [legalModalTab, setLegalModalTab] = useState<'privacy' | 'terms' | null>(null);
 
   const backendModules = [
     {
@@ -820,15 +825,31 @@ export default function LandingView({ onAuthSuccess, onRequestAuthModal }: Landi
                 </ul>
               </div>
 
-              {/* Column 3: COMPANY */}
+              {/* Column 3: COMPANY & LEGAL */}
               <div>
                 <h4 className="font-mono text-xs font-bold tracking-[0.2em] text-slate-300 uppercase pb-2.5 border-b border-slate-800/80 mb-4">
-                  COMPANY
+                  COMPANY & LEGAL
                 </h4>
                 <ul className="space-y-3 text-sm text-slate-400">
-                  <li><a href="#reviews" className="hover:text-slate-200 transition-colors">Blog</a></li>
-                  <li><a href="#reviews" className="hover:text-slate-200 transition-colors">About</a></li>
-                  <li><a href="#reviews" className="hover:text-slate-200 transition-colors">Careers</a></li>
+                  <li><a href="#reviews" className="hover:text-slate-200 transition-colors">About SkillBridge</a></li>
+                  <li>
+                    <button 
+                      type="button" 
+                      onClick={() => setLegalModalTab('privacy')} 
+                      className="hover:text-white transition-colors text-left cursor-pointer flex items-center space-x-1.5"
+                    >
+                      <span>Privacy Policy</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      type="button" 
+                      onClick={() => setLegalModalTab('terms')} 
+                      className="hover:text-white transition-colors text-left cursor-pointer flex items-center space-x-1.5"
+                    >
+                      <span>Terms of Service</span>
+                    </button>
+                  </li>
                   <li><a href="#reviews" className="hover:text-slate-200 transition-colors">Code of Conduct</a></li>
                 </ul>
               </div>
@@ -838,18 +859,35 @@ export default function LandingView({ onAuthSuccess, onRequestAuthModal }: Landi
           </div>
         </div>
 
-        {/* Bottom Bar: Red Box Area in user screenshot */}
+        {/* Bottom Bar: Copyright & Legal Quick Links */}
         <div className="border-t border-slate-800/80 bg-slate-950/80 py-5">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-400">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-400">
             <div>
-              © 2026 SkillBridge. All rights reserved.
+              © 2026 SkillBridge Platform Inc. All rights reserved.
             </div>
-            <div>
+
+            <div className="flex items-center space-x-6 text-slate-400">
+              <button
+                type="button"
+                onClick={() => setLegalModalTab('privacy')}
+                className="hover:text-white transition-colors cursor-pointer"
+              >
+                Privacy Policy
+              </button>
+              <span className="text-slate-700">•</span>
+              <button
+                type="button"
+                onClick={() => setLegalModalTab('terms')}
+                className="hover:text-white transition-colors cursor-pointer"
+              >
+                Terms of Service
+              </button>
+              <span className="text-slate-700">•</span>
               <a 
                 href="/llm.txt" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-flex items-center space-x-1.5 text-slate-400 hover:text-white transition-colors cursor-pointer group"
+                className="inline-flex items-center space-x-1 text-slate-400 hover:text-white transition-colors cursor-pointer group"
                 title="View LLM documentation file"
               >
                 <span className="text-slate-400 group-hover:text-white transition-colors">↗</span>
@@ -859,6 +897,265 @@ export default function LandingView({ onAuthSuccess, onRequestAuthModal }: Landi
           </div>
         </div>
       </footer>
+
+      {/* Legal Compliance Modal (Privacy Policy & Terms of Service) */}
+      {legalModalTab && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl text-slate-300 max-h-[90vh] flex flex-col overflow-hidden my-auto">
+            
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-800 bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                  {legalModalTab === 'privacy' ? <ShieldCheck className="w-5 h-5" /> : <Scale className="w-5 h-5" />}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white tracking-tight">
+                    {legalModalTab === 'privacy' ? 'Privacy Policy' : 'Terms of Service'}
+                  </h2>
+                  <p className="text-xs text-slate-400 font-mono">
+                    SkillBridge Platform Inc. • Effective Date: July 2026
+                  </p>
+                </div>
+              </div>
+
+              {/* Tab Switcher & Close Button */}
+              <div className="flex items-center space-x-3">
+                <div className="bg-slate-800/80 p-1 rounded-xl flex items-center space-x-1 border border-slate-700/60">
+                  <button
+                    type="button"
+                    onClick={() => setLegalModalTab('privacy')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      legalModalTab === 'privacy'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Privacy Policy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLegalModalTab('terms')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      legalModalTab === 'terms'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Terms of Service
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setLegalModalTab(null)}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                  aria-label="Close legal document"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Compliance Badge */}
+            <div className="px-6 py-2.5 bg-blue-950/40 border-b border-blue-900/40 text-blue-300 text-xs font-mono flex items-center space-x-2">
+              <ShieldCheck className="w-4 h-4 text-blue-400 flex-shrink-0" />
+              <span>
+                Compliant with GDPR, CCPA, and Stripe Connect Financial Distribution Standards.
+              </span>
+            </div>
+
+            {/* Modal Body Content */}
+            <div className="p-6 overflow-y-auto space-y-6 text-sm leading-relaxed text-slate-300 divide-y divide-slate-800/60">
+              {legalModalTab === 'privacy' ? (
+                /* PRIVACY POLICY CONTENT */
+                <div className="space-y-6">
+                  <section className="space-y-2">
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <span className="text-blue-400 font-mono text-xs">01.</span>
+                      <span>Overview & Data Processing Principles</span>
+                    </h3>
+                    <p className="text-slate-300">
+                      SkillBridge Platform Inc. ("SkillBridge", "we", "our", or "us") respects your privacy and is committed to protecting your personal data. This Privacy Policy outlines how we collect, process, store, and safeguard information when you use our web platform, submit backend and SQL engineering code, participate in verified learning tracks, and receive monetary payouts via Stripe Connect.
+                    </p>
+                  </section>
+
+                  <section className="pt-6 space-y-3">
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <span className="text-blue-400 font-mono text-xs">02.</span>
+                      <span>Information We Collect</span>
+                    </h3>
+                    <p className="text-slate-300">
+                      We collect only the essential personal data necessary to provide verified code validation, maintain security, and facilitate financial rewards:
+                    </p>
+                    <ul className="list-disc list-inside space-y-2 pl-2 text-slate-300">
+                      <li>
+                        <strong className="text-white">Account & Authentication Data:</strong> Full name, university/personal email address, cryptographically hashed passwords (PBKDF2/bcrypt), two-factor authentication (TOTP) secret keys, and profile avatar metadata.
+                      </li>
+                      <li>
+                        <strong className="text-white">Code & Submission Metadata:</strong> Public GitHub repository URLs, branch commits, submission code snippets, line-by-line review comments, and verified milestone scores.
+                      </li>
+                      <li>
+                        <strong className="text-white">Payout & Financial Information:</strong> Stripe Connect account identifiers, payout status, and transaction references. Sensitive bank account numbers or card credentials are processed directly by Stripe and never stored on SkillBridge servers.
+                      </li>
+                      <li>
+                        <strong className="text-white">Technical & Usage Logs:</strong> IP address, device environment, browser type, authentication logs, and error diagnostic traces.
+                      </li>
+                    </ul>
+                  </section>
+
+                  <section className="pt-6 space-y-3">
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <span className="text-blue-400 font-mono text-xs">03.</span>
+                      <span>How We Use Your Data</span>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-1">
+                        <div className="font-bold text-white">Curriculum & Code Reviews</div>
+                        <p className="text-slate-400">Evaluating submissions, calculating XP points, generating verified completion badges, and sending line-by-line senior staff engineer reviews.</p>
+                      </div>
+                      <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-1">
+                        <div className="font-bold text-white">Cash Payouts & Stripe Connect</div>
+                        <p className="text-slate-400">Verifying reward eligibility for capstones ($20–$50 per module) and disbursing funds securely through Stripe Connect Express.</p>
+                      </div>
+                      <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-1">
+                        <div className="font-bold text-white">Security & Fraud Prevention</div>
+                        <p className="text-slate-400">Preventing multi-account reward abuse, automated submission bots, plagiarism, unauthorized access, and credential stuffing.</p>
+                      </div>
+                      <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-1">
+                        <div className="font-bold text-white">Hiring Partner Matchmaking</div>
+                        <p className="text-slate-400">Displaying public leaderboard ranks and verified track completion credentials to prospective enterprise hiring partners (only with your explicit opt-in).</p>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="pt-6 space-y-2">
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <span className="text-blue-400 font-mono text-xs">04.</span>
+                      <span>Data Sharing & Third-Party Integrations</span>
+                    </h3>
+                    <p className="text-slate-300">
+                      We never sell, rent, or trade your personal data to advertising networks. We share limited necessary data only with trusted infrastructure providers bound by strict confidentiality:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 pl-2 text-slate-300 text-xs">
+                      <li><strong>Stripe Inc.:</strong> Payment processing, Stripe Connect onboarding, and regulatory compliance.</li>
+                      <li><strong>Supabase / PostgreSQL:</strong> Secure cloud database storage with row-level security.</li>
+                      <li><strong>Google OAuth:</strong> Optional single sign-on authentication when authorized by you.</li>
+                    </ul>
+                  </section>
+
+                  <section className="pt-6 space-y-2">
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <span className="text-blue-400 font-mono text-xs">05.</span>
+                      <span>Your Rights & Choices</span>
+                    </h3>
+                    <p className="text-slate-300">
+                      Under applicable privacy laws (GDPR, CCPA), you have the right to request access to your stored personal data, export your submission records, request account deletion, or update your profile settings at any time by contacting <a href="mailto:privacy@skillbridge.dev" className="text-blue-400 hover:underline">privacy@skillbridge.dev</a>.
+                    </p>
+                  </section>
+                </div>
+              ) : (
+                /* TERMS OF SERVICE CONTENT */
+                <div className="space-y-6">
+                  <section className="space-y-2">
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <span className="text-blue-400 font-mono text-xs">01.</span>
+                      <span>Acceptance of Terms</span>
+                    </h3>
+                    <p className="text-slate-300">
+                      By accessing or registering for an account on SkillBridge, you enter into a legally binding agreement to comply with these Terms of Service. If you do not agree to these terms, you must immediately discontinue using the platform.
+                    </p>
+                  </section>
+
+                  <section className="pt-6 space-y-3">
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <span className="text-blue-400 font-mono text-xs">02.</span>
+                      <span>User Eligibility & Account Security</span>
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 pl-2 text-slate-300">
+                      <li>
+                        <strong className="text-white">Age Requirement:</strong> You must be at least 18 years old or the legal age of majority in your jurisdiction to participate in monetary reward claims and Stripe Connect payouts.
+                      </li>
+                      <li>
+                        <strong className="text-white">Account Confidentiality:</strong> You are responsible for safeguarding your credentials, password, and 2FA authentication tokens. Any action performed under your logged-in account is deemed your responsibility.
+                      </li>
+                      <li>
+                        <strong className="text-white">Single Account Policy:</strong> Creating multiple accounts to duplicate capstones or bypass reward limits is strictly prohibited.
+                      </li>
+                    </ul>
+                  </section>
+
+                  <section className="pt-6 space-y-3">
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <span className="text-blue-400 font-mono text-xs">03.</span>
+                      <span>Code Originality & Academic Integrity</span>
+                    </h3>
+                    <p className="text-slate-300">
+                      SkillBridge validates production-grade software engineering skills. All submitted capstones and assignments must represent your own authentic code:
+                    </p>
+                    <div className="p-3 bg-red-950/30 border border-red-900/50 rounded-xl space-y-1 text-xs text-slate-300">
+                      <div className="font-bold text-red-300">Prohibited Conduct:</div>
+                      <p>Submitting plagiarized repositories, automated LLM code submissions without personal understanding, attempting SQL injection or exploit attacks against SkillBridge servers, or sharing capstone solution keys with other students will result in immediate permanent account termination and forfeiture of pending rewards.</p>
+                    </div>
+                  </section>
+
+                  <section className="pt-6 space-y-3">
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <span className="text-blue-400 font-mono text-xs">04.</span>
+                      <span>Reward Engine & Stripe Connect Payouts</span>
+                    </h3>
+                    <p className="text-slate-300">
+                      Monetary rewards ($20 - $50 per module) are awarded upon review approval by senior staff engineer reviewers:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 pl-2 text-slate-300 text-xs">
+                      <li>Payouts are processed exclusively via Stripe Connect Express to supported countries.</li>
+                      <li>Users are responsible for completing Stripe Connect identity verification and reporting local income taxes.</li>
+                      <li>SkillBridge reserves the right to hold or deny payouts if code review standards are not met or if fraudulent activity is flagged.</li>
+                    </ul>
+                  </section>
+
+                  <section className="pt-6 space-y-2">
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <span className="text-blue-400 font-mono text-xs">05.</span>
+                      <span>Intellectual Property & Ownership</span>
+                    </h3>
+                    <p className="text-slate-300">
+                      <strong className="text-white">Student Ownership:</strong> You retain 100% copyright ownership of all code you write and deposit in your personal GitHub repositories.<br />
+                      <strong className="text-white">Platform Assets:</strong> SkillBridge retains full ownership of curriculum content, branding, system architecture, logo, and review feedback text.
+                    </p>
+                  </section>
+
+                  <section className="pt-6 space-y-2">
+                    <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                      <span className="text-blue-400 font-mono text-xs">06.</span>
+                      <span>Limitation of Liability & Contact</span>
+                    </h3>
+                    <p className="text-slate-300">
+                      SkillBridge is provided "as is" without warranty of any kind. We are not liable for lost profits, service interruptions, or third-party API availability. For legal inquiries, please contact <a href="mailto:legal@skillbridge.dev" className="text-blue-400 hover:underline">legal@skillbridge.dev</a>.
+                    </p>
+                  </section>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer Action */}
+            <div className="p-4 sm:p-5 border-t border-slate-800 bg-slate-950/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              <div className="text-slate-400">
+                Questions about legal terms? Contact <a href="mailto:legal@skillbridge.dev" className="text-blue-400 hover:underline font-mono">legal@skillbridge.dev</a>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLegalModalTab(null)}
+                className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold rounded-xl shadow-md transition-all cursor-pointer text-center"
+              >
+                I Understand & Agree
+              </button>
+            </div>
+
+          </div>
+        </div>,
+        document.body
+      )}
 
     </div>
   );

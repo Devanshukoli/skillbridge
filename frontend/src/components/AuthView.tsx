@@ -372,6 +372,34 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
               </>
             )}
 
+            {/* Legal Notice */}
+            <p className="text-[10px] text-center text-slate-400 font-sans leading-normal pt-1">
+              By continuing, you agree to SkillBridge's{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  const el = document.querySelector('footer');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-slate-600 underline hover:text-slate-900 cursor-pointer"
+              >
+                Terms of Service
+              </button>{' '}
+              &{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  const el = document.querySelector('footer');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-slate-600 underline hover:text-slate-900 cursor-pointer"
+              >
+                Privacy Policy
+              </button>.
+            </p>
+
             {/* Quick Demo Credentials helper */}
             <div className="pt-2 border-t border-slate-100 text-center text-[11px] text-slate-500 font-medium">
               Demo Student: <button type="button" onClick={() => { setEmail('student@skillbridge.dev'); setPassword('student123'); setIsLogin(true); }} className="text-blue-600 underline font-semibold cursor-pointer">student@skillbridge.dev</button>
