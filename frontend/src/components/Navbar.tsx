@@ -70,7 +70,7 @@ export default function Navbar({ user, activeSection, isSidebarCollapsed, onTogg
 
       {/* Sidebar navigation */}
       <aside className={`
-        fixed top-14 lg:top-0 bottom-0 left-0 z-40 bg-[var(--app-surface)] border-r border-[var(--app-border)] text-[var(--app-text)] p-4 lg:p-6 flex flex-col justify-between transition-all duration-300 lg:translate-x-0
+        fixed top-14 lg:top-0 bottom-0 left-0 z-50 bg-[var(--app-surface)] border-r border-[var(--app-border)] text-[var(--app-text)] p-4 lg:p-6 flex flex-col justify-between transition-all duration-300 lg:translate-x-0
         ${isSidebarCollapsed ? 'w-20' : 'w-64'}
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
