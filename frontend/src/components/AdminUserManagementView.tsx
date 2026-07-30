@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Edit, Key, Loader2, Save, Search, Settings, UserCheck, UserX, X } from 'lucide-react';
 import { User } from '../types';
 import { AdminSettingsSkeleton } from './Skeleton';
@@ -187,8 +188,8 @@ export default function AdminUserManagementView({ user }: Props) {
         </div>
       </div>
 
-      {editingUser && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+      {editingUser && createPortal(
+        <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
@@ -240,7 +241,8 @@ export default function AdminUserManagementView({ user }: Props) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

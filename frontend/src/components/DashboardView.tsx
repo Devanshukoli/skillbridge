@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { User, Track, Module, Lesson, Project, Submission, Progress } from '../types';
 import { useStripeConnect } from '../hooks/useStripeConnect';
 import { useEscapeKey } from '../hooks/useEscapeKey';
@@ -465,8 +466,8 @@ export default function DashboardView({
       </div>
 
       {/* Stripe Connect Gate Modal */}
-      {stripeGate && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+      {stripeGate && createPortal(
+        <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xl relative">
             <h3 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
               <Briefcase className="w-6 h-6 text-blue-600" />
@@ -495,12 +496,13 @@ export default function DashboardView({
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Claim Payout Modal */}
-      {claimModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+      {claimModalOpen && createPortal(
+        <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xl relative">
             <h3 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
               <Briefcase className="w-6 h-6 text-blue-600" />
@@ -575,7 +577,8 @@ export default function DashboardView({
               </form>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
