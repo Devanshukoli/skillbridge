@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Track, Module, Lesson, Project } from '../types';
 import { Layers, Plus, Trash2, Edit, Save, X, BookOpen, Code, Folder, Loader2 } from 'lucide-react';
+import { api } from '../lib/api';
 
 interface Props {
   curriculum: any;
@@ -33,7 +34,7 @@ export default function AdminTracksCMSView({ curriculum, onRefreshCurriculum }: 
       const method = isNew ? 'POST' : 'PUT';
       const endpoint = `/api/admin/${activeItem.type}s${isNew ? '' : `/${formData.id}`}`;
       
-      const res = await fetch(endpoint, {
+      const res = await api(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -53,7 +54,7 @@ export default function AdminTracksCMSView({ curriculum, onRefreshCurriculum }: 
   const handleDelete = async (type: string, id: string) => {
     if (!confirm('Are you sure you want to delete this?')) return;
     try {
-      await fetch(`/api/admin/${type}s/${id}`, { method: 'DELETE' });
+      await api(`/api/admin/${type}s/${id}`, { method: 'DELETE' });
       onRefreshCurriculum();
       if (activeItem?.id === id) setActiveItem(null);
     } catch (e) {

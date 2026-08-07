@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { User } from '../types';
 import { Code, Mail, Lock, User as UserIcon, ArrowRight, Loader2, X } from 'lucide-react';
 import LandingView from './LandingView';
+import { api } from '../lib/api';
 
 interface AuthViewProps {
   onAuthSuccess: (user: User) => void;
@@ -61,7 +62,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
     const body = isLogin ? { email, password } : { name, email, password };
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await api(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -99,7 +100,7 @@ export default function AuthView({ onAuthSuccess }: AuthViewProps) {
     setError('');
 
     try {
-      const res = await fetch('/api/auth/2fa/verify', {
+      const res = await api('/api/auth/2fa/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: twoFactorEmail, token: twoFactorToken })

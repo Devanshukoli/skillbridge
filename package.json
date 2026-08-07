@@ -1,15 +1,8 @@
 {
   "name": "Skill-Bridge",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
-  "repository": {
-    "url": "https://github.com/Devanshukoli/skillbridge/",
-    "type": "git"
-  },
-  "author": {
-    "name": "Devanshu Koli"
-  },
   "scripts": {
     "dev": "tsx backend/server.ts",
     "build": "vite build && esbuild backend/server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
@@ -28,6 +21,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@vitejs/plugin-react": "^5.0.4",
     "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "gray-matter": "^4.0.3",
@@ -48,6 +42,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/nodemailer": "^8.0.1",

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ManualPayoutDetails, PaymentStatus, StripeConnectStatus } from '../types';
+import { api } from '../lib/api';
 
 const defaultStatus: StripeConnectStatus = {
   connected: false,
@@ -23,7 +24,7 @@ export function useStripeConnect(autoFetch = true) {
     setError('');
 
     try {
-      const res = await fetch('/api/payments/status');
+      const res = await api('/api/payments/status');
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to load Stripe status.');
@@ -40,7 +41,7 @@ export function useStripeConnect(autoFetch = true) {
 
   const fetchPaymentConfig = useCallback(async () => {
     try {
-      const res = await fetch('/api/payments/config');
+      const res = await api('/api/payments/config');
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to load payment config.');
@@ -58,7 +59,7 @@ export function useStripeConnect(autoFetch = true) {
     setError('');
 
     try {
-      const res = await fetch('/api/payments/payment-status');
+      const res = await api('/api/payments/payment-status');
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to load payment status.');
@@ -78,7 +79,7 @@ export function useStripeConnect(autoFetch = true) {
     setError('');
 
     try {
-      const res = await fetch('/api/payments/manual-payout', {
+      const res = await api('/api/payments/manual-payout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ details })
@@ -102,7 +103,7 @@ export function useStripeConnect(autoFetch = true) {
     setError('');
 
     try {
-      const res = await fetch('/api/payments/refresh', { method: 'POST' });
+      const res = await api('/api/payments/refresh', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to refresh Stripe status.');
@@ -122,7 +123,7 @@ export function useStripeConnect(autoFetch = true) {
     setError('');
 
     try {
-      const res = await fetch('/api/payments/connect', { method: 'POST' });
+      const res = await api('/api/payments/connect', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to start Stripe onboarding.');
@@ -147,7 +148,7 @@ export function useStripeConnect(autoFetch = true) {
     setError('');
 
     try {
-      const res = await fetch('/api/payments/connect', { method: 'DELETE' });
+      const res = await api('/api/payments/connect', { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to disconnect Stripe.');

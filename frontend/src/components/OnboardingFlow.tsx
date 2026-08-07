@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from '../types';
 import { Check, Code, ArrowRight, Clock, Target, Award, Loader2 } from 'lucide-react';
+import { api } from '../lib/api';
 
 interface OnboardingFlowProps {
   user: User;
@@ -31,7 +32,7 @@ export default function OnboardingFlow({ user, onOnboardingComplete }: Onboardin
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/onboarding', {
+      const res = await api('/api/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Track, Module, Lesson, Project, Submission, Progress } from '../types';
+import { api } from '../lib/api';
 import {
   Award,
   Github,
@@ -88,7 +89,7 @@ export default function ProjectSubmissionView({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/submissions', {
+      const res = await api('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

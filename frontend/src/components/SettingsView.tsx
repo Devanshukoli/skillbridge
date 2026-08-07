@@ -3,6 +3,7 @@ import { ManualPayoutDetails, User } from '../types';
 import { avatarPresets } from '../avatarPresets';
 import { useStripeConnect } from '../hooks/useStripeConnect';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { api } from '../lib/api';
 import {
   AlertTriangle,
   Award,
@@ -193,7 +194,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
     setSuccess(false);
 
     try {
-      const res = await fetch('/api/profile', {
+      const res = await api('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(buildProfilePayload())
@@ -227,7 +228,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
     payload.country = nextCountry;
 
     try {
-      const res = await fetch('/api/profile', {
+      const res = await api('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -294,7 +295,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
     setPasswordSuccess(false);
 
     try {
-      const res = await fetch('/api/auth/change-password', {
+      const res = await api('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -326,7 +327,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
     setTwoFactorError('');
     setTwoFactorSuccess(false);
     try {
-      const res = await fetch('/api/auth/2fa/generate-secret', { method: 'POST' });
+      const res = await api('/api/auth/2fa/generate-secret', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to generate 2FA secret');
@@ -350,7 +351,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
     setTwoFactorLoading(true);
     setTwoFactorError('');
     try {
-      const res = await fetch('/api/auth/2fa/enable', {
+      const res = await api('/api/auth/2fa/enable', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ secret: twoFactorSecret, token: twoFactorToken })
@@ -379,7 +380,7 @@ export default function SettingsView({ user, onUserUpdate }: SettingsViewProps) 
     setTwoFactorError('');
     setDisableTwoFactorError('');
     try {
-      const res = await fetch('/api/auth/2fa/disable', {
+      const res = await api('/api/auth/2fa/disable', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password, token })

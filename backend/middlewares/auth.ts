@@ -14,7 +14,7 @@ export function getCookies(req: Request): Record<string, string> {
   const cookies: Record<string, string> = {};
   const cookieHeader = req.headers.cookie;
   if (!cookieHeader) return cookies;
-
+  
   cookieHeader.split(';').forEach(cookie => {
     const parts = cookie.split('=');
     if (parts.length >= 2) {
@@ -42,7 +42,7 @@ export async function authenticate(req: AuthenticatedRequest, res: Response, nex
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string; role: string };
-
+    
     let user: User | null = null;
     user = await supabaseGetUserById(decoded.userId);
 

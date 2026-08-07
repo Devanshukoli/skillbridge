@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Submission, Claim, ManualPayoutDetails } from '../types';
 import { Server, Check, Clock, Loader2 } from 'lucide-react';
 import { AdminDashboardSkeleton } from './Skeleton';
+import { api } from '../lib/api';
 
 interface Props {
   user: User;
@@ -18,8 +19,8 @@ export default function AdminDashboardView({ user }: Props) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const subRes = await fetch('/api/admin/submissions');
-      const claimRes = await fetch('/api/admin/claims');
+      const subRes = await api('/api/admin/submissions');
+      const claimRes = await api('/api/admin/claims');
       
       if (subRes.ok) setSubmissions(await subRes.json());
       if (claimRes.ok) setClaims(await claimRes.json());
@@ -38,7 +39,7 @@ export default function AdminDashboardView({ user }: Props) {
     setPayLoadingId(claimId);
     setPayError(null);
     try {
-      const res = await fetch(`/api/admin/claims/${claimId}/pay`, { method: 'POST' });
+      const res = await api(`/api/admin/claims/${claimId}/pay`, { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setPayError(data?.error || 'Failed to pay claim. It has been left pending so you can retry.');

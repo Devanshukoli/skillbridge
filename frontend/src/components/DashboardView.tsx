@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { User, Track, Module, Lesson, Project, Submission, Progress } from '../types';
 import { useStripeConnect } from '../hooks/useStripeConnect';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { api } from '../lib/api';
 import {
   Award,
   DollarSign,
@@ -118,7 +119,7 @@ export default function DashboardView({
     setStripeGate(null);
 
     try {
-      const res = await fetch('/api/claims/eligibility');
+      const res = await api('/api/claims/eligibility');
       const eligibility = await res.json();
       if (!res.ok) {
         throw new Error(eligibility.error || 'Failed to check claim eligibility.');
@@ -158,7 +159,7 @@ export default function DashboardView({
     setClaimLoading(true);
     setClaimError('');
     try {
-      const res = await fetch('/api/claims/request', {
+      const res = await api('/api/claims/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount })

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Submission, SubmissionHistory } from '../types';
+import { api } from '../lib/api';
 import {
   ClipboardCheck,
   AlertCircle,
@@ -30,7 +31,7 @@ export default function AdminView({ user, onRefreshCurriculum }: Props) {
 
   const fetchSubmissions = async () => {
     try {
-      const res = await fetch('/api/admin/submissions');
+      const res = await api('/api/admin/submissions');
       if (res.ok) {
         setSubmissions(await res.json());
       }
@@ -41,7 +42,7 @@ export default function AdminView({ user, onRefreshCurriculum }: Props) {
 
   const fetchHistory = async (subId: string) => {
     try {
-      const res = await fetch(`/api/admin/submissions/${subId}/history`);
+      const res = await api(`/api/admin/submissions/${subId}/history`);
       if (res.ok) {
         setHistory(await res.json());
       }
@@ -66,7 +67,7 @@ export default function AdminView({ user, onRefreshCurriculum }: Props) {
     if (!selectedSubId || !feedback) return;
     setReviewLoading(true);
     try {
-      const res = await fetch(`/api/admin/submissions/${selectedSubId}/review`, {
+      const res = await api(`/api/admin/submissions/${selectedSubId}/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, feedback })

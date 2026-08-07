@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Loader2, Monitor, Moon, Save, Settings, Sun, User as UserIcon } from 'lucide-react';
+import { avatarPresets } from '../avatarPresets';
 import { User } from '../types';
+import { api } from '../lib/api';
 
 interface Props {
   user: User;
@@ -17,6 +19,7 @@ const appearanceOptions: Array<{ value: AppearanceMode; label: string; icon: Rea
 
 export default function AdminSettingsView({ user, onUserUpdate }: Props) {
   const [name, setName] = useState(user.name);
+  const [avatarId, setAvatarId] = useState(user.profile.avatarId || avatarPresets[0].id);
   const [appearance, setAppearance] = useState<AppearanceMode>(user.profile.appearance || 'system');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,6 +27,7 @@ export default function AdminSettingsView({ user, onUserUpdate }: Props) {
 
   useEffect(() => {
     setName(user.name);
+    setAvatarId(user.profile.avatarId || avatarPresets[0].id);
     setAppearance(user.profile.appearance || 'system');
   }, [user]);
 
@@ -48,6 +52,7 @@ export default function AdminSettingsView({ user, onUserUpdate }: Props) {
 
   const buildProfilePayload = () => ({
     name: name.trim(),
+    avatarId,
     appearance,
     bio: user.profile.bio || '',
     currentRole: user.profile.currentRole || '',
@@ -80,7 +85,7 @@ export default function AdminSettingsView({ user, onUserUpdate }: Props) {
     setSuccess(false);
 
     try {
-      const res = await fetch('/api/profile', {
+      const res = await api('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(buildProfilePayload())
@@ -143,6 +148,36 @@ export default function AdminSettingsView({ user, onUserUpdate }: Props) {
               </div>
 
               <div className="mt-5 space-y-5">
+                <div className="space-y-3">
+                  <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
+                    Avatar
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {avatarPresets.map((avatar) => {
+                      const isSelected = avatarId === avatar.id;
+
+                      return (
+                        <button
+                          key={avatar.id}
+                          type="button"
+                          onClick={() => setAvatarId(avatar.id)}
+                          className={`relative w-16 h-16 rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${
+                            isSelected ? 'border-blue-600 ring-4 ring-blue-100' : 'border-slate-200 hover:border-slate-300'
+                          }`}
+                          title={avatar.label}
+                        >
+                          <img src={avatar.src} alt={avatar.label} className="w-full h-full object-cover" />
+                          {isSelected && (
+                            <span className="absolute bottom-1 right-1 bg-blue-600 text-white rounded-full p-0.5">
+                              <Check className="w-3 h-3" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="space-y-1.5">
                   <label className="block text-xs font-mono text-slate-500 uppercase tracking-wider">
                     Full Name

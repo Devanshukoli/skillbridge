@@ -4,6 +4,7 @@ import { Edit, Key, Loader2, Save, Search, Settings, UserCheck, UserX, X } from 
 import { User } from '../types';
 import { AdminSettingsSkeleton } from './Skeleton';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { api } from '../lib/api';
 
 interface Props {
   user: User;
@@ -22,7 +23,7 @@ export default function AdminUserManagementView({ user }: Props) {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await api('/api/admin/users');
       if (res.ok) {
         setUsers(await res.json());
       }
@@ -42,7 +43,7 @@ export default function AdminUserManagementView({ user }: Props) {
   const handleToggleBlock = async (targetUser: User) => {
     const newStatus = targetUser.status === 'blocked' ? 'active' : 'blocked';
     try {
-      const res = await fetch(`/api/admin/users/${targetUser.id}`, {
+      const res = await api(`/api/admin/users/${targetUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -70,7 +71,7 @@ export default function AdminUserManagementView({ user }: Props) {
         payload.newPassword = editPassword.trim();
       }
 
-      const res = await fetch(`/api/admin/users/${editingUser.id}`, {
+      const res = await api(`/api/admin/users/${editingUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

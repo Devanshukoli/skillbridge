@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 
@@ -19,6 +20,19 @@ import { logger } from './server/logger';
 
 const app = express();
 const PORT = 3000;
+
+// Enable CORS for cross-origin requests from Vercel frontend to Railway backend
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin or from Vercel / localhost
+    if (!origin || origin.endsWith('.vercel.app') || origin.includes('localhost') || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
+  credentials: true
+}));
 
 app.use('/api', paymentsWebhookRouter);
 app.use(express.json());

@@ -16,6 +16,7 @@ import AdminUserManagementView from './components/AdminUserManagementView';
 import LegalView from './components/LegalView';
 import { Code } from 'lucide-react';
 import { AppShellSkeleton } from './components/Skeleton';
+import { api } from './lib/api';
 
 const sectionsByRole: Record<User['role'], string[]> = {
   admin: ['dashboard', 'tracks', 'submissions', 'user-management', 'settings'],
@@ -120,7 +121,7 @@ export default function App() {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        const res = await fetch('/api/auth/me');
+        const res = await api('/api/auth/me');
         const data = await res.json();
         if (data.user) {
           setUser(data.user);
@@ -147,7 +148,7 @@ export default function App() {
     
     setLoadingCurriculum(true);
     try {
-      const res = await fetch('/api/curriculum');
+      const res = await api('/api/curriculum');
       if (res.ok) {
         const data = await res.json();
         setCurriculum(data);
@@ -177,7 +178,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await api('/api/auth/logout', { method: 'POST' });
       setUser(null);
       setActiveSection('dashboard');
       setSelectedLessonId(null);

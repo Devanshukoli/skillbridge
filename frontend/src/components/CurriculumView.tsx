@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Track, Module, Lesson, Project, Submission, Progress } from '../types';
+import { api } from '../lib/api';
 import MarkdownRenderer from './MarkdownRenderer';
 import {
   BookOpen,
@@ -148,7 +149,7 @@ export default function CurriculumView({
     if (!activeLesson) return;
     setCompleting(true);
     try {
-      const res = await fetch(`/api/lessons/${activeLesson.id}/complete`, {
+      const res = await api(`/api/lessons/${activeLesson.id}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
