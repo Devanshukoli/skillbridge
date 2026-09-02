@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
+import compression from 'compression';
 
 // Modular Route Imports
 import authRouter from './modules/auth/auth.routes';
@@ -37,6 +38,8 @@ app.use(cors({
   },
   credentials: true
 }));
+
+app.use(compression());
 
 app.use('/api', paymentsWebhookRouter);
 app.use(express.json());
