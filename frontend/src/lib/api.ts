@@ -6,5 +6,5 @@ export const API_URL = import.meta.env.VITE_API_URL || '';
  */
 export async function api(path: string, init?: RequestInit): Promise<Response> {
   const url = path.startsWith('http') ? path : (path.startsWith('/') ? `${API_URL}${path}` : `${API_URL}/${path}`);
-  return fetch(url, init);
+  return fetch(url, { ...init, credentials: 'include' });
 }
