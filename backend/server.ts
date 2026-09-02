@@ -26,18 +26,21 @@ if (!PORT) {
   process.exit(1);
 }
 
-// Enable CORS for cross-origin requests from Vercel frontend to Railway backend
+const allowedOrigins = [
+  'https://skillbridge-4bsq.onrender.com',
+  'https://skillbridge-peach-ten.vercel.app',
+];
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin or from Vercel / localhost
-    if (!origin || origin.endsWith('.vercel.app') || origin.includes('localhost') || process.env.NODE_ENV !== 'production') {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.includes('localhost') || process.env.NODE_ENV !== 'production') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true
-}));
+}));;
 
 app.use(compression());
 
