@@ -28,7 +28,7 @@ interface GoogleUserInfo {
 export class AuthController {
   private setSessionCookie(res: Response, user: User) {
     const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.setHeader('Set-Cookie', `skillbridge_token=${token}; Path=/; HttpOnly; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax`);
+    res.setHeader('Set-Cookie', `skillbridge_token=${token}; Path=/; HttpOnly; Max-Age=${7 * 24 * 60 * 60}; SameSite=none; Secure`);
   }
 
   private getBaseUrl(req: Request) {
@@ -243,7 +243,7 @@ export class AuthController {
         prompt: 'select_account'
       });
 
-      res.setHeader('Set-Cookie', `skillbridge_oauth_state=${state}; Path=/; HttpOnly; Max-Age=600; SameSite=Lax`);
+      res.setHeader('Set-Cookie', `skillbridge_oauth_state=${state}; Path=/; HttpOnly; Max-Age=600; SameSite=none; Secure`);
       res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
     } catch (err) {
       next(err);
@@ -345,12 +345,12 @@ export class AuthController {
           auth_provider: 'google'
         });
 
-        res.append('Set-Cookie', 'skillbridge_oauth_state=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax');
+        res.append('Set-Cookie', 'skillbridge_oauth_state=; Path=/; HttpOnly; Max-Age=0; SameSite=none; Secure');
         return res.redirect(`${baseUrl}/?${redirectParams.toString()}`);
       }
 
       this.setSessionCookie(res, user);
-      res.append('Set-Cookie', 'skillbridge_oauth_state=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax');
+      res.append('Set-Cookie', 'skillbridge_oauth_state=; Path=/; HttpOnly; Max-Age=0; SameSite=none; Secure');
       res.redirect(baseUrl);
     } catch (err) {
       next(err);

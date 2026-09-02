@@ -19,7 +19,11 @@ import { requestLogger } from './server/requestLogger';
 import { logger } from './server/logger';
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+if (!PORT) {
+  logger.error('PORT is not set');
+  process.exit(1);
+}
 
 // Enable CORS for cross-origin requests from Vercel frontend to Railway backend
 app.use(cors({
@@ -28,7 +32,7 @@ app.use(cors({
     if (!origin || origin.endsWith('.vercel.app') || origin.includes('localhost') || process.env.NODE_ENV !== 'production') {
       callback(null, true);
     } else {
-      callback(null, true);
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true
