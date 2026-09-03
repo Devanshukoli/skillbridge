@@ -121,7 +121,6 @@ export default function App() {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 2500));
         const res = await api('/api/auth/me');
         const data = await res.json();
         if (data.user) {
