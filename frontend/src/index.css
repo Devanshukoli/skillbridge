@@ -10,6 +10,30 @@
   .animate-fade-in {
     animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
+
+  .session-boot {
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--app-bg);
+    color: var(--app-text);
+  }
+
+  .session-boot__enter {
+    animation: sessionBootEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .session-boot__bridge {
+    height: 2px;
+    width: 11rem;
+    border-radius: 999px;
+    background-image: linear-gradient(90deg, #1d4ed8, #ea580c);
+    transform-origin: left center;
+    animation:
+      sessionBootBridge 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both,
+      sessionBootBreathe 2.4s ease-in-out 1.1s infinite;
+  }
 }
 
 @keyframes fadeIn {
@@ -20,6 +44,49 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes sessionBootEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sessionBootBridge {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes sessionBootBreathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .session-boot__enter,
+  .session-boot__bridge {
+    animation: none;
+  }
+
+  .session-boot__bridge {
+    transform: none;
+    opacity: 1;
   }
 }
 
