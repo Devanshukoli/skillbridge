@@ -8,7 +8,13 @@ if [[ ! -f .env ]]; then
   cp .env.example .env
 fi
 
-# Wait for the dev server terminal to bind port 3000 (best-effort, 60s).
+# Start the dev server in the background when nothing is listening yet.
+# Terminals may also launch the same command; this keeps start idempotent.
+if ! curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1; then
+  DISABLE_HMR=true JWT_SECRET=skillbridge-cloud-dev npm run dev &
+fi
+
+# Wait for the dev server to bind port 3000 (best-effort, 60s).
 for _ in $(seq 1 60); do
   if curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1; then
     echo "SkillBridge dev server is ready at http://localhost:3000"
@@ -18,4 +24,4 @@ for _ in $(seq 1 60); do
 done
 
 echo "Warning: dev server did not become ready within 60s" >&2
-exit 0
+exit 1
