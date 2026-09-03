@@ -1,0 +1,18 @@
+{
+  "name": "SkillBridge",
+  "install": "npm ci",
+  "start": "./.cursor/scripts/cloud-agent-start.sh",
+  "terminals": [
+    {
+      "name": "dev-server",
+      "command": "DISABLE_HMR=true JWT_SECRET=skillbridge-cloud-dev npm run dev",
+      "description": "Express + Vite dev server at http://localhost:3000"
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 3000
+    }
+  ]
+}
