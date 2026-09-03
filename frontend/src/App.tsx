@@ -15,7 +15,7 @@ import AdminSettingsView from './components/AdminSettingsView';
 import AdminUserManagementView from './components/AdminUserManagementView';
 import LegalView from './components/LegalView';
 import { Code } from 'lucide-react';
-import { AppShellSkeleton } from './components/Skeleton';
+import { SessionBootScreen } from './components/Skeleton';
 import { api } from './lib/api';
 
 const sectionsByRole: Record<User['role'], string[]> = {
@@ -121,6 +121,7 @@ export default function App() {
   useEffect(() => {
     const fetchSession = async () => {
       try {
+        await new Promise((resolve) => setTimeout(resolve, 2500));
         const res = await api('/api/auth/me');
         const data = await res.json();
         if (data.user) {
@@ -207,7 +208,7 @@ export default function App() {
 
   // 4. Render Session Boot Loading Screen
   if (loadingSession) {
-    return <AppShellSkeleton />;
+    return <SessionBootScreen />;
   }
 
   // 4. Render Auth Page if not authenticated
