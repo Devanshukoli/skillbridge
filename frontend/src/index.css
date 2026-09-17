@@ -28,7 +28,7 @@
     height: 2px;
     width: 11rem;
     border-radius: 999px;
-    background-image: linear-gradient(90deg, #1d4ed8, #ea580c);
+    background-image: linear-gradient(90deg, var(--app-accent), var(--app-accent-strong));
     transform-origin: left center;
     animation:
       sessionBootBridge 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both,
@@ -91,29 +91,37 @@
 }
 
 :root {
-  --app-bg: #f8fafc;
+  --app-bg: #ffffff;
+  --app-surface-alt: #f5f7fa;
+  --app-border: #e4e8ef;
+  --app-text: #0b1220;
+  --app-text-muted: #5b6472;
+  --app-accent: #2451ff;
+  --app-accent-strong: #14267a;
+  --app-money: #0e8f5c;
   --app-surface: #ffffff;
-  --app-surface-muted: #f8fafc;
-  --app-surface-elevated: #f1f5f9;
-  --app-border: #e2e8f0;
-  --app-border-strong: #cbd5e1;
-  --app-text: #0f172a;
-  --app-text-muted: #475569;
-  --app-text-soft: #64748b;
-  --app-shadow: rgba(15, 23, 42, 0.06);
+  --app-surface-muted: #f5f7fa;
+  --app-surface-elevated: #ffffff;
+  --app-border-strong: #e4e8ef;
+  --app-text-soft: #5b6472;
+  --app-shadow: rgba(11, 18, 32, 0.08);
 }
 
 :root[data-theme="dark"] {
-  --app-bg: #020617;
-  --app-surface: #0f172a;
-  --app-surface-muted: #111827;
-  --app-surface-elevated: #1e293b;
-  --app-border: #1f2937;
-  --app-border-strong: #334155;
-  --app-text: #e2e8f0;
-  --app-text-muted: #cbd5e1;
-  --app-text-soft: #94a3b8;
-  --app-shadow: rgba(2, 6, 23, 0.45);
+  --app-bg: #0a0e17;
+  --app-surface-alt: #10151f;
+  --app-border: #1c2430;
+  --app-text: #e7ebf3;
+  --app-text-muted: #8b94a7;
+  --app-accent: #4c74ff;
+  --app-accent-strong: #a9bbff;
+  --app-money: #34c77e;
+  --app-surface: #10151f;
+  --app-surface-muted: #10151f;
+  --app-surface-elevated: #10151f;
+  --app-border-strong: #1c2430;
+  --app-text-soft: #8b94a7;
+  --app-shadow: rgba(0, 0, 0, 0.35);
 }
 
 body {
@@ -260,4 +268,108 @@ main {
 :root[data-theme="dark"] tbody,
 :root[data-theme="dark"] tr {
   color: var(--app-text-muted);
+}
+
+.type-display {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-size: clamp(2.25rem, 4.2vw, 3.5rem);
+  line-height: 1.12;
+  color: var(--app-text);
+}
+
+.type-title {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  line-height: 1.25;
+  color: var(--app-text);
+}
+
+.type-heading {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-size: 1.125rem;
+  line-height: 1.35;
+  color: var(--app-text);
+}
+
+.type-body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--app-text-muted);
+}
+
+.type-seq {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0;
+  color: var(--app-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.font-tech {
+  font-family: var(--font-mono);
+}
+
+.tabular-money {
+  font-variant-numeric: tabular-nums;
+  color: var(--app-money);
+  font-weight: 700;
+}
+
+.surface-elevated {
+  background-color: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 28px var(--app-shadow);
+}
+
+.surface-quote {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--app-border);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.landing-hero-reveal {
+  animation: landingHeroReveal 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.landing-crossfade {
+  animation: landingCrossfade 0.28s ease both;
+}
+
+@keyframes landingHeroReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes landingCrossfade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero-reveal,
+  .landing-crossfade {
+    animation: none;
+  }
 }
