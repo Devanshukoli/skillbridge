@@ -7,4 +7,7 @@ coverage/
 .env*
 !.env.example
 db.json
+
+# Noodle runtime state
+.noodle/
 .arena/
